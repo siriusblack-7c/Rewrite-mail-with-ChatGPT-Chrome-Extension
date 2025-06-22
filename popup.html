@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 350px;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background: #f8f9fa;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            color: #202124;
+            font-weight: 500;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 13px;
+            color: #5f6368;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #202124;
+        }
+
+        input[type="password"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease;
+            background: white;
+        }
+
+        input[type="password"]:focus,
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 1px #1a73e8;
+        }
+
+        .button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s ease;
+        }
+
+        .button:hover {
+            background: #1557b0;
+        }
+
+        .button:disabled {
+            background: #9aa0a6;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .status.success {
+            background: #e8f5e8;
+            color: #137333;
+            border: 1px solid #ceead6;
+        }
+
+        .status.error {
+            background: #fce8e6;
+            color: #d93025;
+            border: 1px solid #f9dedc;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        .divider {
+            height: 1px;
+            background: #dadce0;
+            margin: 20px 0;
+        }
+
+        .usage-info {
+            background: white;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #dadce0;
+            font-size: 13px;
+            color: #5f6368;
+            line-height: 1.4;
+        }
+
+        .link {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Native English Email Assistant</h1>
+        <p>Rewrite emails to sound like native English speakers</p>
+    </div>
+
+    <form id="settingsForm">
+        <div class="form-group">
+            <label for="apiKey">OpenAI API Key</label>
+            <input type="password" id="apiKey" placeholder="sk-..." required>
+            <div class="help-text">
+                Your API key is stored locally and never shared.
+                <a href="https://platform.openai.com/api-keys" target="_blank" class="link">Get your API key here</a>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="englishVariant">English Variant</label>
+            <select id="englishVariant" required>
+                <option value="US">🇺🇸 United States (American English)</option>
+                <option value="UK">🇬🇧 United Kingdom (British English)</option>
+                <option value="AU">🇦🇺 Australia (Australian English)</option>
+                <option value="CA">🇨🇦 Canada (Canadian English)</option>
+                <option value="NZ">🇳🇿 New Zealand (New Zealand English)</option>
+                <option value="ZA">🇿🇦 South Africa (South African English)</option>
+            </select>
+            <div class="help-text">
+                Choose which English variant you want your emails to sound like.
+            </div>
+        </div>
+
+        <button type="submit" class="button" id="saveButton">Save Settings</button>
+
+        <div id="status" class="status" style="display: none;"></div>
+    </form>
+
+    <div class="divider"></div>
+
+    <div class="usage-info">
+        <strong>How to use:</strong><br>
+        1. Set your OpenAI API key and preferred English variant<br>
+        2. Open Gmail and compose a new email<br>
+        3. Write your email content<br>
+        4. Click the "Rewrite for [Your Selected Variant]" button<br>
+        5. Review and accept the improved text!
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

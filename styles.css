@@ -1,0 +1,106 @@
+/* Native English Email Assistant Styles */
+
+.native-english-rewrite-btn {
+    display: inline-block;
+    margin-left: 8px;
+}
+
+.rewrite-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Google Sans', Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
+}
+
+.rewrite-button:hover {
+    background: #1557b0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.rewrite-button:active {
+    background: #1348a0;
+    transform: translateY(1px);
+}
+
+.rewrite-button:disabled {
+    background: #9aa0a6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.rewrite-button svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.native-english-message {
+    font-family: 'Google Sans', Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Spinning animation for loading state */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+/* Preview Dialog Styles */
+.native-english-overlay {
+    font-family: 'Google Sans', Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
+}
+
+.native-english-overlay button:hover {
+    opacity: 0.9;
+}
+
+.native-english-overlay button:active {
+    transform: translateY(1px);
+}
+
+.native-english-overlay textarea:focus {
+    outline: none;
+    border-color: #1a73e8;
+    box-shadow: 0 0 0 1px #1a73e8;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .native-english-overlay div[style*="grid-template-columns"] {
+        display: block !important;
+    }
+
+    .native-english-overlay div[style*="grid-template-columns"]>div:first-child {
+        margin-bottom: 20px;
+    }
+}

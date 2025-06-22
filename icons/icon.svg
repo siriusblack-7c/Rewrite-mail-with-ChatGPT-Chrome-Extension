@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="58" fill="#1a73e8" stroke="#1557b0" stroke-width="4"/>
+  
+  <!-- Inner background -->
+  <circle cx="64" cy="64" r="50" fill="#4285f4"/>
+  
+  <!-- Email/Document icon -->
+  <rect x="32" y="40" width="64" height="48" rx="4" fill="white" opacity="0.95"/>
+  <rect x="36" y="44" width="56" height="40" rx="2" fill="#f8f9fa"/>
+  
+  <!-- Text lines representing email content -->
+  <rect x="40" y="50" width="48" height="3" rx="1.5" fill="#5f6368"/>
+  <rect x="40" y="58" width="40" height="3" rx="1.5" fill="#5f6368"/>
+  <rect x="40" y="66" width="44" height="3" rx="1.5" fill="#5f6368"/>
+  <rect x="40" y="74" width="36" height="3" rx="1.5" fill="#5f6368"/>
+  
+  <!-- Sparkle/magic effect (indicating AI improvement) -->
+  <g transform="translate(75,35)">
+    <path d="M0,0 L3,9 L12,6 L3,12 L0,21 L-3,12 L-12,6 L-3,9 Z" fill="#ffd700" opacity="0.9"/>
+  </g>
+  
+  <g transform="translate(85,75) scale(0.7)">
+    <path d="M0,0 L3,9 L12,6 L3,12 L0,21 L-3,12 L-12,6 L-3,9 Z" fill="#ffd700" opacity="0.7"/>
+  </g>
+  
+  <g transform="translate(25,30) scale(0.5)">
+    <path d="M0,0 L3,9 L12,6 L3,12 L0,21 L-3,12 L-12,6 L-3,9 Z" fill="#ffd700" opacity="0.6"/>
+  </g>
+  
+  <!-- Checkmark indicating correction/improvement -->
+  <g transform="translate(70,88)">
+    <circle cx="0" cy="0" r="12" fill="#34a853"/>
+    <path d="M-6,-1 L-2,3 L6,-5" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  
+  <!-- "EN" text to indicate English -->
+  <text x="45" y="35" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a73e8">EN</text>
+</svg> 

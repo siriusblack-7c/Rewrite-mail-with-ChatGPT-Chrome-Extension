@@ -16,6 +16,24 @@ A Chrome extension that integrates with Gmail to rewrite emails using ChatGPT, m
 - **Professional Tone**: Maintains the original meaning while making emails sound more professional and native
 - **Interactive Preview & Edit**: Shows side-by-side comparison with editable original and rewritten text
 - **Iterative Improvement**: Provide feedback like "make it more brief" or "add more details" to regenerate improved versions
+- **Smart Signature Handling**: Automatically preserves email signatures (content after "--") without rewriting
+- **Format Preservation**: Maintains bullet points, numbered lists, paragraphs, and text structure
+- **Example**: 
+  ```
+  Input: "Please send report today
+  - Financial data
+  - Market analysis
+  --
+  Best regards,
+  John Smith"
+  
+  Output: "Please send the report today
+  • Financial data  
+  • Market analysis
+  --
+  Best regards,
+  John Smith"
+  ```
 - **Safe Editing**: Original message remains intact until you approve the changes
 - **Easy to Use**: Simple one-click button in Gmail compose window with intuitive preview dialog
 - **Secure**: API key stored locally in your browser, never shared
@@ -84,11 +102,13 @@ A Chrome extension that integrates with Gmail to rewrite emails using ChatGPT, m
 The extension:
 1. Detects when you're composing an email in Gmail
 2. Adds a "Rewrite for [Your Selected Variant]" button to the compose window
-3. When clicked, sends your text to OpenAI's ChatGPT API with instructions for your chosen English variant
-4. Receives improved text that sounds like it was written by a native speaker of your selected English variant
-5. Shows a preview dialog with original and rewritten text side-by-side
-6. Allows you to edit the rewritten text before applying
-7. Only updates your email after you approve the changes
+3. When clicked, automatically detects and preserves email signatures (content after "--")
+4. Sends only the main email content to OpenAI's ChatGPT API with instructions for your chosen English variant
+5. Receives improved text that sounds like it was written by a native speaker of your selected English variant
+6. Preserves original formatting (bullet points, lists, paragraphs) while improving the language
+7. Shows a preview dialog with original and rewritten text side-by-side
+8. Allows you to edit the rewritten text and provide feedback for regeneration
+9. Only updates your email after you approve the changes, maintaining signatures and formatting
 
 ## Privacy & Security
 
@@ -126,6 +146,16 @@ This extension uses OpenAI's API, which has usage-based pricing:
 - Verify your OpenAI account has available credits
 - Try with a shorter email if the text is very long
 
+### Signature Not Preserved
+- Ensure your signature follows standard format with "--" separator
+- Signatures are detected after common phrases like "Best regards," "Sincerely," etc.
+- Manual signature separators: use "--" on its own line
+
+### Formatting Issues
+- The extension preserves bullet points (•, -, *) and numbered lists
+- Paragraph breaks (double line breaks) are maintained
+- If formatting appears broken, try using standard markdown-style formatting
+
 ## Customization
 
 You can modify the AI prompt in `content.js` to change how the rewriting works:
@@ -147,6 +177,7 @@ For issues or questions:
 
 ## Version History
 
+- **v1.3**: Added smart signature handling (preserves content after "--" without rewriting) and enhanced formatting preservation for bullet points, numbered lists, and text structure
 - **v1.2**: Added interactive feedback system - users can provide specific feedback (e.g., "make it more brief") to iteratively improve the AI rewriting. Made original text editable in preview dialog.
 - **v1.1**: Added support for multiple English variants (US, UK, AU, CA, NZ, ZA) with region-specific prompts and terminology
 - **v1.0**: Initial release with basic Gmail integration and ChatGPT rewriting

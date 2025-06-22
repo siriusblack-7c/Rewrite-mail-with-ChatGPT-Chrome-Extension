@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Native English Email Assistant",
-    "version": "1.2",
+    "version": "1.3",
     "description": "Rewrite emails to sound like native English (US, UK, AU, CA, NZ, ZA) using AI",
     "permissions": [
         "activeTab",

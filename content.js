@@ -183,24 +183,118 @@ class GmailRewriter {
   }
 
   getSystemPrompt(englishVariant) {
+    const baseInstructions = 'You are a professional writing assistant. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary.';
+
     const prompts = {
-      'US': 'You are a professional writing assistant. Rewrite the following email text to sound like it was written by a native American English speaker. Use American spelling (e.g., "color", "analyze", "organize"), American terminology, and natural American phrasing. Maintain the original meaning and tone, but improve grammar, word choice, and sentence structure to sound natural and professional. Keep the same level of formality as the original. Do not include any other text in your response.',
+      'US': `${baseInstructions} Use American spelling (e.g., "color", "analyze", "organize"), American terminology, and natural American phrasing to sound like a native American English speaker.`,
 
-      'UK': 'You are a professional writing assistant. Rewrite the following email text to sound like it was written by a native British English speaker. Use British spelling (e.g., "colour", "analyse", "organise"), British terminology (e.g., "whilst", "amongst", "post" for mail), and natural British phrasing. Maintain the original meaning and tone, but improve grammar, word choice, and sentence structure to sound natural and professional. Keep the same level of formality as the original. Do not include any other text in your response.',
+      'UK': `${baseInstructions} Use British spelling (e.g., "colour", "analyse", "organise"), British terminology (e.g., "whilst", "amongst", "post" for mail), and natural British phrasing to sound like a native British English speaker.`,
 
-      'AU': 'You are a professional writing assistant. Rewrite the following email text to sound like it was written by a native Australian English speaker. Use Australian spelling (British-based), Australian terminology and expressions, and natural Australian phrasing. Maintain the original meaning and tone, but improve grammar, word choice, and sentence structure to sound natural and professional. Keep the same level of formality as the original. Do not include any other text in your response.',
+      'AU': `${baseInstructions} Use Australian spelling (British-based), Australian terminology and expressions, and natural Australian phrasing to sound like a native Australian English speaker.`,
 
-      'CA': 'You are a professional writing assistant. Rewrite the following email text to sound like it was written by a native Canadian English speaker. Use Canadian spelling (mix of British and American), Canadian terminology, and natural Canadian phrasing. Maintain the original meaning and tone, but improve grammar, word choice, and sentence structure to sound natural and professional. Keep the same level of formality as the original. Do not include any other text in your response.',
+      'CA': `${baseInstructions} Use Canadian spelling (mix of British and American), Canadian terminology, and natural Canadian phrasing to sound like a native Canadian English speaker.`,
 
-      'NZ': 'You are a professional writing assistant. Rewrite the following email text to sound like it was written by a native New Zealand English speaker. Use New Zealand spelling (British-based), New Zealand terminology and expressions, and natural New Zealand phrasing. Maintain the original meaning and tone, but improve grammar, word choice, and sentence structure to sound natural and professional. Keep the same level of formality as the original. Do not include any other text in your response.',
+      'NZ': `${baseInstructions} Use New Zealand spelling (British-based), New Zealand terminology and expressions, and natural New Zealand phrasing to sound like a native New Zealand English speaker.`,
 
-      'ZA': 'You are a professional writing assistant. Rewrite the following email text to sound like it was written by a native South African English speaker. Use South African spelling (British-based), South African terminology and expressions, and natural South African phrasing. Maintain the original meaning and tone, but improve grammar, word choice, and sentence structure to sound natural and professional. Keep the same level of formality as the original. Do not include any other text in your response.'
+      'ZA': `${baseInstructions} Use South African spelling (British-based), South African terminology and expressions, and natural South African phrasing to sound like a native South African English speaker.`
     };
 
     return prompts[englishVariant] || prompts['US']; // Default to US English
   }
 
+  splitEmailContent(text) {
+    // Common signature separators
+    const signatureSeparators = [
+      /\n--\s*\n/,           // Standard signature separator with newlines
+      /\n--\s*$/,            // Signature separator at end
+      /^--\s*\n/,            // Signature separator at start
+      /\n-- \n/,             // Signature separator with space
+      /\n--$/,               // Simple signature separator at end
+      /^--$/m,               // Signature separator on its own line
+      /\n---+\s*\n/,         // Multiple dashes
+      /\nBest regards,/i,    // Common signature starts
+      /\nSincerely,/i,
+      /\nKind regards,/i,
+      /\nThanks,/i,
+      /\nRegards,/i,
+      /\nCheers,/i,
+      /\nBest,/i
+    ];
+
+    // Try to find signature separator
+    for (const separator of signatureSeparators) {
+      const match = text.match(separator);
+      if (match) {
+        const splitIndex = match.index;
+        const mainContent = text.substring(0, splitIndex).trim();
+        const signature = text.substring(splitIndex).trim();
+
+        // Only split if we have meaningful content in both parts
+        if (mainContent.length > 10 && signature.length > 2) {
+          return {
+            mainContent: mainContent,
+            signature: signature,
+            hasSignature: true
+          };
+        }
+      }
+    }
+
+    // No signature found, return original text
+    return {
+      mainContent: text.trim(),
+      signature: '',
+      hasSignature: false
+    };
+  }
+
+  combineEmailContent(mainContent, signature, hasSignature) {
+    if (!hasSignature || !signature) {
+      return mainContent;
+    }
+
+    // Ensure proper spacing between content and signature
+    const cleanMain = mainContent.trim();
+    const cleanSignature = signature.trim();
+
+    // If signature doesn't start with standard separator, add one
+    if (!cleanSignature.startsWith('--')) {
+      return `${cleanMain}\n\n${cleanSignature}`;
+    }
+
+    return `${cleanMain}\n${cleanSignature}`;
+  }
+
+  updateComposeBodyWithFormatting(composeBody, text) {
+    // Preserve formatting while converting to HTML for Gmail
+    let formattedText = text
+      // Preserve paragraph breaks (double newlines)
+      .replace(/\n\n/g, '</p><p>')
+      // Convert single newlines to line breaks, but preserve list structure
+      .replace(/\n(?![\s]*[-•*])/g, '<br>')
+      // Handle bullet points with various markers
+      .replace(/\n[\s]*[-•*]\s*(.+)/g, '<br>• $1')
+      // Handle numbered lists
+      .replace(/\n[\s]*(\d+\.)\s*(.+)/g, '<br>$1 $2')
+      // Handle signature separators
+      .replace(/\n--[\s]*\n/g, '<br>--<br>')
+      .replace(/\n--[\s]*$/g, '<br>--');
+
+    // Wrap in paragraph tags if not already wrapped
+    if (!formattedText.startsWith('<p>')) {
+      formattedText = `<p>${formattedText}</p>`;
+    }
+
+    // Clean up any empty paragraphs
+    formattedText = formattedText.replace(/<p><\/p>/g, '');
+
+    composeBody.innerHTML = formattedText;
+  }
+
   async rewriteWithChatGPT(text) {
+    // Split email content to handle signature separately
+    const { mainContent, signature, hasSignature } = this.splitEmailContent(text);
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -216,7 +310,7 @@ class GmailRewriter {
           },
           {
             role: 'user',
-            content: text
+            content: mainContent
           }
         ],
         max_tokens: 1000,
@@ -229,10 +323,16 @@ class GmailRewriter {
     }
 
     const data = await response.json();
-    return data.choices[0].message.content;
+    const rewrittenMainContent = data.choices[0].message.content;
+
+    // Combine rewritten content with original signature
+    return this.combineEmailContent(rewrittenMainContent, signature, hasSignature);
   }
 
   async rewriteWithFeedback(text, feedback) {
+    // Split email content to handle signature separately
+    const { mainContent, signature, hasSignature } = this.splitEmailContent(text);
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -248,7 +348,7 @@ class GmailRewriter {
           },
           {
             role: 'user',
-            content: `Please rewrite the following email text. Additionally, please incorporate this specific feedback: "${feedback}"\n\nEmail text to rewrite:\n${text}`
+            content: `Please rewrite the following email text. Additionally, please incorporate this specific feedback: "${feedback}"\n\nEmail text to rewrite:\n${mainContent}`
           }
         ],
         max_tokens: 1000,
@@ -261,7 +361,10 @@ class GmailRewriter {
     }
 
     const data = await response.json();
-    return data.choices[0].message.content;
+    const rewrittenMainContent = data.choices[0].message.content;
+
+    // Combine rewritten content with original signature
+    return this.combineEmailContent(rewrittenMainContent, signature, hasSignature);
   }
 
   showPreviewDialog(composeWindow, originalText, rewrittenText, composeBody) {
@@ -335,7 +438,7 @@ class GmailRewriter {
             </h3>
             <textarea 
               id="rewrittenTextArea" 
-              style="background: #e8f5e8; padding: 15px; border-radius: 4px; border: 1px solid #ceead6; min-height: 150px; width: 100%; height: 100%; box-sizing: border-box; font-size: 14px; line-height: 1.5; font-family: inherit; resize: vertical;"
+              style="background: #e8f5e8; padding: 15px; border-radius: 4px; border: 1px solid #ceead6; min-height: 150px; width: 100%; box-sizing: border-box; font-size: 14px; line-height: 1.5; font-family: inherit; resize: vertical;"
             >${rewrittenText}</textarea>
             
             <div style="margin-top: 15px;">
@@ -386,8 +489,8 @@ class GmailRewriter {
     acceptBtn.addEventListener('click', () => {
       const finalText = rewrittenTextArea.value;
 
-      // Update the compose body with the final text
-      composeBody.innerHTML = finalText.replace(/\n/g, '<br>');
+      // Update the compose body with the final text, preserving formatting
+      this.updateComposeBodyWithFormatting(composeBody, finalText);
 
       // Trigger input event to notify Gmail
       composeBody.dispatchEvent(new Event('input', { bubbles: true }));

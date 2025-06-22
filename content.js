@@ -102,14 +102,14 @@ class GmailRewriter {
 
     // Get the display name for the selected English variant
     const variantNames = {
-      'US': 'American English',
-      'UK': 'British English',
-      'AU': 'Australian English',
-      'CA': 'Canadian English',
-      'NZ': 'New Zealand English',
-      'ZA': 'South African English'
+      'US': 'US',
+      'UK': 'UK',
+      'AU': 'AU',
+      'CA': 'CA',
+      'NZ': 'NZ',
+      'ZA': 'ZA'
     };
-    const variantName = variantNames[this.englishVariant] || 'American English';
+    const variantName = variantNames[this.englishVariant] || 'US';
 
     // Create the rewrite button
     const rewriteBtn = document.createElement('div');
@@ -119,7 +119,7 @@ class GmailRewriter {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.01-4.65.51-6.84L9.37 4.5C8.16 3.42 6.49 3.42 5.28 4.5l-1.5 1.31C2.57 6.87 2.3 7.96 2.66 9c.36 1.04 1.2 1.88 2.24 2.24 1.04.36 2.13.09 3.19-.57l.03.03L5.58 13.8c-.35.35-.35.92 0 1.27.35.35.92.35 1.27 0l2.54-2.54.03.03c1.66 1.66 4.38 1.66 6.04 0l1.41-1.41c.39-.39.39-1.02 0-1.41-.39-.39-1.02-.39-1.41 0l-1.41 1.41c-.78.78-2.05.78-2.83 0-.78-.78-.78-2.05 0-2.83l1.41-1.41c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41l-1.41 1.41z"/>
         </svg>
-        Rewrite for ${variantName}
+        ${variantName}
       </button>
     `;
 
@@ -161,7 +161,7 @@ class GmailRewriter {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="spinning">
         <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
       </svg>
-      Rewriting...
+      <span>...</span>
     `;
     button.disabled = true;
 
@@ -388,71 +388,315 @@ class GmailRewriter {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
       z-index: 10001;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Google Sans', Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      animation: overlayFadeIn 0.3s ease-out;
     `;
 
     // Create dialog
     const dialog = document.createElement('div');
     dialog.style.cssText = `
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      max-width: 800px;
-      max-height: 80vh;
-      width: 90%;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.2);
+      max-width: 900px;
+      max-height: 85vh;
+      width: 95%;
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      animation: dialogSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
     `;
 
+    // Add CSS animations and styles to the dialog
+    const dialogStyles = document.createElement('style');
+    dialogStyles.textContent = `
+      @keyframes overlayFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      @keyframes dialogSlideIn {
+        from { 
+          opacity: 0; 
+          transform: scale(0.9) translateY(20px); 
+        }
+        to { 
+          opacity: 1; 
+          transform: scale(1) translateY(0); 
+        }
+      }
+      
+      .gorgeous-dialog-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 28px;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .gorgeous-dialog-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='9' cy='9' r='2'/%3E%3Ccircle cx='51' cy='9' r='2'/%3E%3Ccircle cx='9' cy='51' r='2'/%3E%3Ccircle cx='51' cy='51' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        pointer-events: none;
+      }
+      
+      .gorgeous-dialog-title {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        z-index: 1;
+      }
+      
+      .gorgeous-dialog-subtitle {
+        margin: 10px 0 0 0;
+        opacity: 0.9;
+        font-size: 15px;
+        font-weight: 400;
+        position: relative;
+        z-index: 1;
+      }
+      
+      .gorgeous-dialog-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 28px;
+        background: #ffffff;
+      }
+      
+      .gorgeous-content-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+        margin-bottom: 24px;
+      }
+      
+      .gorgeous-content-section h3 {
+        margin: 0 0 16px 0;
+        color: #2d3748;
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .gorgeous-text-area {
+        border: 2px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px;
+        min-height: 200px;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 14px;
+        line-height: 1.6;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        resize: vertical;
+        transition: all 0.3s ease;
+      }
+      
+      .gorgeous-text-area:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+      }
+      
+      .gorgeous-original-area {
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border-color: #cbd5e0;
+      }
+      
+      .gorgeous-rewritten-area {
+        background: linear-gradient(135deg, #e6fffa 0%, #f0fff4 100%);
+        border-color: #9ae6b4;
+      }
+      
+      .gorgeous-feedback-section {
+        margin-top: 24px;
+        padding: 24px;
+        background: linear-gradient(135deg, #fffbeb 0%, #fef5e7 100%);
+        border-radius: 20px;
+        border: 2px solid #fed7aa;
+      }
+      
+      .gorgeous-feedback-title {
+        margin: 0 0 16px 0;
+        color: #92400e;
+        font-size: 15px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .gorgeous-feedback-area {
+        background: white;
+        border: 2px solid #fbbf24;
+        border-radius: 12px;
+        padding: 16px;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 13px;
+        line-height: 1.5;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 70px;
+        transition: all 0.3s ease;
+      }
+      
+      .gorgeous-feedback-area:focus {
+        outline: none;
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        transform: translateY(-1px);
+      }
+      
+      .gorgeous-regenerate-btn {
+        margin-top: 16px;
+        padding: 14px 24px;
+        border: none;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        border-radius: 12px;
+        font-size: 14px;
+        cursor: pointer;
+        font-weight: 600;
+        width: 100%;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+      }
+      
+      .gorgeous-regenerate-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+      }
+      
+      .gorgeous-regenerate-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+      
+      .gorgeous-dialog-footer {
+        padding: 28px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        display: flex;
+        gap: 16px;
+        justify-content: flex-end;
+        border-top: 1px solid #e2e8f0;
+      }
+      
+      .gorgeous-footer-btn {
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 130px;
+      }
+      
+      .gorgeous-cancel-btn {
+        border: 2px solid #e2e8f0;
+        background: white;
+        color: #4a5568;
+      }
+      
+      .gorgeous-cancel-btn:hover {
+        background: #f7fafc;
+        border-color: #cbd5e0;
+        transform: translateY(-1px);
+      }
+      
+      .gorgeous-accept-btn {
+        border: none;
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+      }
+      
+      .gorgeous-accept-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
+      }
+      
+      @media (max-width: 768px) {
+        .gorgeous-content-grid {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+        
+        .gorgeous-dialog-content {
+          padding: 20px;
+        }
+        
+        .gorgeous-dialog-footer {
+          padding: 20px;
+          flex-direction: column;
+        }
+        
+        .gorgeous-footer-btn {
+          min-width: auto;
+        }
+      }
+    `;
+    document.head.appendChild(dialogStyles);
+
     dialog.innerHTML = `
-      <div style="padding: 20px; border-bottom: 1px solid #e0e0e0;">
-        <h2 style="margin: 0; color: #202124; font-size: 18px; font-weight: 500;">
-          Preview Email (${variantName})
+      <div class="gorgeous-dialog-header">
+        <h2 class="gorgeous-dialog-title">
+          ✨ Preview Email (${variantName})
         </h2>
-        <p style="margin: 8px 0 0 0; color: #5f6368; font-size: 14px;">
+        <p class="gorgeous-dialog-subtitle">
           Review the changes and choose to accept, edit, or cancel
         </p>
       </div>
       
-      <div style="flex: 1; overflow-y: auto; padding: 20px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-          <div>
-            <h3 style="margin: 0 0 10px 0; color: #202124; font-size: 14px; font-weight: 500;">
-              Original Text
-            </h3>
+      <div class="gorgeous-dialog-content">
+        <div class="gorgeous-content-grid">
+          <div class="gorgeous-content-section">
+            <h3>📝 Original Text</h3>
             <textarea 
               id="originalTextArea" 
-              style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #e0e0e0; min-height: 150px; width: 100%; box-sizing: border-box; font-size: 14px; line-height: 1.5; font-family: inherit; resize: vertical;"
+              class="gorgeous-text-area gorgeous-original-area"
             >${originalText}</textarea>
           </div>
           
-          <div>
-            <h3 style="margin: 0 0 10px 0; color: #202124; font-size: 14px; font-weight: 500;">
-              Rewritten Text
-            </h3>
+          <div class="gorgeous-content-section">
+            <h3>✨ Rewritten Text</h3>
             <textarea 
               id="rewrittenTextArea" 
-              style="background: #e8f5e8; padding: 15px; border-radius: 4px; border: 1px solid #ceead6; min-height: 150px; width: 100%; box-sizing: border-box; font-size: 14px; line-height: 1.5; font-family: inherit; resize: vertical;"
+              class="gorgeous-text-area gorgeous-rewritten-area"
             >${rewrittenText}</textarea>
             
-            <div style="margin-top: 15px;">
-              <h4 style="margin: 0 0 8px 0; color: #202124; font-size: 13px; font-weight: 500;">
-                Feedback for Improvement
+            <div class="gorgeous-feedback-section">
+              <h4 class="gorgeous-feedback-title">
+                💬 Feedback for Improvement
               </h4>
               <textarea 
                 id="feedbackTextArea" 
+                class="gorgeous-feedback-area"
                 placeholder="e.g., 'Make it more brief', 'Add more details', 'Make it more formal', 'Use simpler language'..."
-                style="background: #fff3e0; padding: 12px; border-radius: 4px; border: 1px solid #ffcc80; width: 100%; box-sizing: border-box; font-size: 13px; line-height: 1.4; font-family: inherit; resize: vertical; min-height: 60px;"
               ></textarea>
               <button 
                 id="regenerateBtn" 
-                style="margin-top: 8px; padding: 6px 12px; border: none; background: #ff9800; color: white; border-radius: 4px; font-size: 13px; cursor: pointer; font-weight: 500; width: 100%;"
+                class="gorgeous-regenerate-btn"
               >
                 🔄 Regenerate with Feedback
               </button>
@@ -461,12 +705,12 @@ class GmailRewriter {
         </div>
       </div>
       
-      <div style="padding: 20px; border-top: 1px solid #e0e0e0; display: flex; gap: 12px; justify-content: flex-end;">
-        <button id="cancelBtn" style="padding: 8px 16px; border: 1px solid #dadce0; background: white; color: #3c4043; border-radius: 4px; font-size: 14px; cursor: pointer;">
-          Cancel
+      <div class="gorgeous-dialog-footer">
+        <button id="cancelBtn" class="gorgeous-footer-btn gorgeous-cancel-btn">
+          ❌ Cancel
         </button>
-        <button id="acceptBtn" style="padding: 8px 16px; border: none; background: #1a73e8; color: white; border-radius: 4px; font-size: 14px; cursor: pointer; font-weight: 500;">
-          Accept Changes
+        <button id="acceptBtn" class="gorgeous-footer-btn gorgeous-accept-btn">
+          ✅ Accept Changes
         </button>
       </div>
     `;
@@ -560,35 +804,96 @@ class GmailRewriter {
     // Create message element
     const messageEl = document.createElement('div');
     messageEl.className = `native-english-message ${type}`;
-    messageEl.textContent = message;
+
+    // Add emoji prefix based on type
+    const emoji = type === 'success' ? '✅' : '❌';
+    messageEl.textContent = `${emoji} ${message}`;
 
     // Position and style
-    messageEl.style.position = 'fixed';
-    messageEl.style.top = '20px';
-    messageEl.style.right = '20px';
-    messageEl.style.padding = '12px 16px';
-    messageEl.style.borderRadius = '4px';
-    messageEl.style.zIndex = '10000';
-    messageEl.style.fontSize = '14px';
-    messageEl.style.fontWeight = '500';
-    messageEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+    messageEl.style.cssText = `
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      padding: 16px 24px;
+      border-radius: 16px;
+      z-index: 10000;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 400px;
+      backdrop-filter: blur(10px);
+      animation: messageSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+    `;
 
     if (type === 'success') {
-      messageEl.style.backgroundColor = '#4CAF50';
+      messageEl.style.background = 'linear-gradient(135deg, #48bb78, #38a169)';
       messageEl.style.color = 'white';
+      messageEl.style.boxShadow = '0 8px 32px rgba(72, 187, 120, 0.4)';
     } else {
-      messageEl.style.backgroundColor = '#f44336';
+      messageEl.style.background = 'linear-gradient(135deg, #f56565, #e53e3e)';
       messageEl.style.color = 'white';
+      messageEl.style.boxShadow = '0 8px 32px rgba(245, 101, 101, 0.4)';
+    }
+
+    // Add CSS animation
+    if (!document.querySelector('#gorgeous-message-animations')) {
+      const messageAnimations = document.createElement('style');
+      messageAnimations.id = 'gorgeous-message-animations';
+      messageAnimations.textContent = `
+        @keyframes messageSlideIn {
+          from {
+            opacity: 0;
+            transform: translateX(100%) scale(0.8);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
+        }
+        
+        @keyframes messageSlideOut {
+          from {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
+          to {
+            opacity: 0;
+            transform: translateX(100%) scale(0.8);
+          }
+        }
+        
+        .native-english-message:hover {
+          transform: translateY(-2px);
+          transition: transform 0.2s ease;
+        }
+      `;
+      document.head.appendChild(messageAnimations);
     }
 
     document.body.appendChild(messageEl);
 
-    // Remove after 3 seconds
+    // Add click to dismiss
+    messageEl.addEventListener('click', () => {
+      messageEl.style.animation = 'messageSlideOut 0.3s ease-in forwards';
+      setTimeout(() => {
+        if (messageEl.parentNode) {
+          messageEl.parentNode.removeChild(messageEl);
+        }
+      }, 300);
+    });
+
+    // Auto remove after 4 seconds with animation
     setTimeout(() => {
       if (messageEl.parentNode) {
-        messageEl.parentNode.removeChild(messageEl);
+        messageEl.style.animation = 'messageSlideOut 0.3s ease-in forwards';
+        setTimeout(() => {
+          if (messageEl.parentNode) {
+            messageEl.parentNode.removeChild(messageEl);
+          }
+        }, 300);
       }
-    }, 3000);
+    }, 4000);
   }
 }
 

@@ -4,186 +4,470 @@
 <head>
     <meta charset="utf-8">
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            width: 350px;
-            padding: 20px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            width: 450px;
+            padding: 0;
             margin: 0;
-            background: #f8f9fa;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px 20px 0 0;
+            padding: 30px;
+            min-height: auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
         }
 
         .header h1 {
             margin: 0;
-            font-size: 18px;
-            color: #202124;
-            font-weight: 500;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
         }
 
         .header p {
-            margin: 5px 0 0 0;
-            font-size: 13px;
-            color: #5f6368;
+            margin: 0;
+            font-size: 14px;
+            color: #718096;
+            font-weight: 400;
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 24px;
+            position: relative;
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #202124;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+            transition: color 0.2s ease;
+        }
+
+        .input-wrapper {
+            position: relative;
         }
 
         input[type="password"],
         input[type="text"],
         select {
             width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #dadce0;
-            border-radius: 4px;
+            padding: 7px 8px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
             font-size: 14px;
-            box-sizing: border-box;
-            transition: border-color 0.2s ease;
             background: white;
+            transition: all 0.3s ease;
+            font-family: inherit;
         }
 
         input[type="password"]:focus,
         input[type="text"]:focus,
         select:focus {
             outline: none;
-            border-color: #1a73e8;
-            box-shadow: 0 0 0 1px #1a73e8;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        select {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+            padding-right: 40px;
+            appearance: none;
         }
 
         .button {
-            background: #1a73e8;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 500;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
             cursor: pointer;
             width: 100%;
-            transition: background-color 0.2s ease;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
         }
 
         .button:hover {
-            background: #1557b0;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:hover::before {
+            left: 100%;
+        }
+
+        .button:active {
+            transform: translateY(0);
         }
 
         .button:disabled {
-            background: #9aa0a6;
+            background: linear-gradient(135deg, #a0aec0, #cbd5e0);
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         .status {
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 13px;
-            margin-top: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            margin-top: 16px;
             text-align: center;
+            font-weight: 500;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .status.success {
-            background: #e8f5e8;
-            color: #137333;
-            border: 1px solid #ceead6;
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
         }
 
         .status.error {
-            background: #fce8e6;
-            color: #d93025;
-            border: 1px solid #f9dedc;
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
         }
 
         .help-text {
-            font-size: 12px;
-            color: #5f6368;
-            margin-top: 5px;
-            line-height: 1.4;
+            font-size: 13px;
+            color: #718096;
+            margin-top: 8px;
+            line-height: 1.5;
         }
 
         .divider {
             height: 1px;
-            background: #dadce0;
-            margin: 20px 0;
+            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+            margin: 30px 0;
         }
 
-        .usage-info {
+        .hamburger-menu {
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .hamburger-btn {
+            background: linear-gradient(135deg, #4a5568, #2d3748);
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(74, 85, 104, 0.3);
+        }
+
+        .hamburger-btn:hover {
+            background: linear-gradient(135deg, #2d3748, #1a202c);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(74, 85, 104, 0.4);
+        }
+
+        .hamburger-icon {
+            display: flex;
+            flex-direction: column;
+            width: 18px;
+            height: 12px;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-line {
+            width: 100%;
+            height: 2px;
             background: white;
-            padding: 12px;
-            border-radius: 4px;
-            border: 1px solid #dadce0;
-            font-size: 13px;
-            color: #5f6368;
-            line-height: 1.4;
+            border-radius: 1px;
+            transition: all 0.3s ease;
         }
 
         .link {
-            color: #1a73e8;
+            color: #667eea;
             text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
         }
 
         .link:hover {
+            color: #5a67d8;
             text-decoration: underline;
+        }
+
+        .feature-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Page navigation styles */
+        .page {
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .page.hidden {
+            display: none;
+            opacity: 0;
+        }
+
+        .page.visible {
+            display: block;
+            opacity: 1;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .return-btn {
+            background: linear-gradient(135deg, #4a5568, #2d3748);
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(74, 85, 104, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .return-btn:hover {
+            background: linear-gradient(135deg, #2d3748, #1a202c);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(74, 85, 104, 0.4);
+        }
+
+        .help-page {
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            font-size: 14px;
+            color: #4a5568;
+            line-height: 1.6;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .help-page::before {
+            content: '💡';
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            font-size: 20px;
+            opacity: 0.7;
+        }
+
+        .help-page strong {
+            color: #2d3748;
+            font-weight: 700;
+        }
+
+        /* Responsive design */
+        @media (max-width: 470px) {
+            body {
+                width: 100vw;
+            }
+
+            .container {
+                padding: 20px;
+            }
         }
     </style>
 </head>
 
-<body>
-    <div class="header">
-        <h1>Native English Email Assistant</h1>
-        <p>Rewrite emails to sound like native English speakers</p>
-    </div>
+<body style="width: 350px;">
+    <div class="container">
+        <div class="header">
+            <h1>Native English Email Assistant</h1>
+            <p>Rewrite emails to sound like native English speakers</p>
+        </div>
 
-    <form id="settingsForm">
-        <div class="form-group">
-            <label for="apiKey">OpenAI API Key</label>
-            <input type="password" id="apiKey" placeholder="sk-..." required>
-            <div class="help-text">
-                Your API key is stored locally and never shared.
-                <a href="https://platform.openai.com/api-keys" target="_blank" class="link">Get your API key here</a>
+        <!-- Main Page -->
+        <div id="mainPage" class="page visible">
+            <form id="settingsForm">
+                <div class="form-group">
+                    <label for="apiKey">🔑 OpenAI API Key</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="apiKey" placeholder="sk-..." required>
+                    </div>
+                    <div class="help-text">
+                        Your API key is stored locally and never shared.
+                        <a href="https://platform.openai.com/api-keys" target="_blank" class="link">Get your API key
+                            here</a>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="englishVariant">🌍 English Variant</label>
+                    <div class="input-wrapper">
+                        <select id="englishVariant" required>
+                            <option value="US">🇺🇸 United States (American English)</option>
+                            <option value="UK">🇬🇧 United Kingdom (British English)</option>
+                            <option value="AU">🇦🇺 Australia (Australian English)</option>
+                            <option value="CA">🇨🇦 Canada (Canadian English)</option>
+                            <option value="NZ">🇳🇿 New Zealand (New Zealand English)</option>
+                            <option value="ZA">🇿🇦 South Africa (South African English)</option>
+                        </select>
+                    </div>
+                    <div class="help-text">
+                        Choose which English variant you want your emails to sound like.
+                    </div>
+                </div>
+
+                <button type="submit" class="button" id="saveButton">
+                    <span>💾 Save Settings</span>
+                </button>
+
+                <div id="status" class="status" style="display: none;"></div>
+            </form>
+
+            <div class="hamburger-menu">
+                <button class="hamburger-btn" id="helpToggle">
+                    <div class="hamburger-icon">
+                        <div class="hamburger-line"></div>
+                        <div class="hamburger-line"></div>
+                        <div class="hamburger-line"></div>
+                    </div>
+                    <span>Help & Guide</span>
+                </button>
             </div>
         </div>
 
-        <div class="form-group">
-            <label for="englishVariant">English Variant</label>
-            <select id="englishVariant" required>
-                <option value="US">🇺🇸 United States (American English)</option>
-                <option value="UK">🇬🇧 United Kingdom (British English)</option>
-                <option value="AU">🇦🇺 Australia (Australian English)</option>
-                <option value="CA">🇨🇦 Canada (Canadian English)</option>
-                <option value="NZ">🇳🇿 New Zealand (New Zealand English)</option>
-                <option value="ZA">🇿🇦 South Africa (South African English)</option>
-            </select>
-            <div class="help-text">
-                Choose which English variant you want your emails to sound like.
+        <!-- Help Page -->
+        <div id="helpPage" class="page hidden">
+            <button class="return-btn" id="returnButton">
+                <span>← Return to Settings</span>
+            </button>
+
+            <div class="help-page">
+                <strong>✨ How to use:</strong><br>
+                1. Set your OpenAI API key and preferred English variant<br>
+                2. Open Gmail and compose a new email<br>
+                3. Write your email content<br>
+                4. Click the "Rewrite for [Your Selected Variant]" button<br>
+                5. Review and accept the improved text!
+
+                <div class="feature-badges">
+                    <span class="badge">Smart Signatures</span>
+                    <span class="badge">Format Preservation</span>
+                    <span class="badge">Interactive Feedback</span>
+                </div>
             </div>
         </div>
-
-        <button type="submit" class="button" id="saveButton">Save Settings</button>
-
-        <div id="status" class="status" style="display: none;"></div>
-    </form>
-
-    <div class="divider"></div>
-
-    <div class="usage-info">
-        <strong>How to use:</strong><br>
-        1. Set your OpenAI API key and preferred English variant<br>
-        2. Open Gmail and compose a new email<br>
-        3. Write your email content<br>
-        4. Click the "Rewrite for [Your Selected Variant]" button<br>
-        5. Review and accept the improved text!
     </div>
 
     <script src="popup.js"></script>

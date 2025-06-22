@@ -18,6 +18,7 @@ A Chrome extension that integrates with Gmail to rewrite emails using ChatGPT, m
 - **Iterative Improvement**: Provide feedback like "make it more brief" or "add more details" to regenerate improved versions
 - **Smart Signature Handling**: Automatically preserves email signatures (content after "--") without rewriting
 - **Format Preservation**: Maintains bullet points, numbered lists, paragraphs, and text structure
+- **Gorgeous Modern UI**: Beautiful gradient design with smooth animations, glassmorphism effects, and responsive layout
 - **Example**: 
   ```
   Input: "Please send report today
@@ -177,6 +178,8 @@ For issues or questions:
 
 ## Version History
 
+- **v1.5**: Converted help section to collapsible hamburger menu for cleaner, more compact popup interface. Added smooth animations for menu transitions and improved overall UX.
+- **v1.4**: Complete UI redesign with gorgeous modern interface featuring gradient backgrounds, glassmorphism effects, smooth animations, hover effects, and enhanced responsive design. Improved popup and preview dialog styling.
 - **v1.3**: Added smart signature handling (preserves content after "--" without rewriting) and enhanced formatting preservation for bullet points, numbered lists, and text structure
 - **v1.2**: Added interactive feedback system - users can provide specific feedback (e.g., "make it more brief") to iteratively improve the AI rewriting. Made original text editable in preview dialog.
 - **v1.1**: Added support for multiple English variants (US, UK, AU, CA, NZ, ZA) with region-specific prompts and terminology

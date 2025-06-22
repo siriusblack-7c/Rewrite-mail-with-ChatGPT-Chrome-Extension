@@ -108,4 +108,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Hide status when user starts typing
         statusDiv.style.display = 'none';
     });
+
+    // Page navigation functionality
+    const helpToggle = document.getElementById('helpToggle');
+    const returnButton = document.getElementById('returnButton');
+    const mainPage = document.getElementById('mainPage');
+    const helpPage = document.getElementById('helpPage');
+
+    // Show help page when help button is clicked
+    helpToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        showHelpPage();
+    });
+
+    // Return to main page when return button is clicked
+    returnButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        showMainPage();
+    });
+
+    function showHelpPage() {
+        mainPage.classList.remove('visible');
+        mainPage.classList.add('hidden');
+        helpPage.classList.remove('hidden');
+        helpPage.classList.add('visible');
+    }
+
+    function showMainPage() {
+        helpPage.classList.remove('visible');
+        helpPage.classList.add('hidden');
+        mainPage.classList.remove('hidden');
+        mainPage.classList.add('visible');
+    }
 }); 

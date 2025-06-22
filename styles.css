@@ -94,6 +94,34 @@
     box-shadow: 0 0 0 1px #1a73e8;
 }
 
+/* Feedback section styling */
+.native-english-overlay textarea:focus {
+    outline: none;
+    border-color: #1a73e8;
+    box-shadow: 0 0 0 1px #1a73e8;
+}
+
+.native-english-overlay button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.native-english-overlay button:active {
+    transform: translateY(0px);
+}
+
+.native-english-overlay button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Regenerate button specific styling */
+#regenerateBtn:hover:not(:disabled) {
+    background: #f57c00 !important;
+    box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);
+}
+
 /* Responsive design for smaller screens */
 @media (max-width: 768px) {
     .native-english-overlay div[style*="grid-template-columns"] {
@@ -102,5 +130,9 @@
 
     .native-english-overlay div[style*="grid-template-columns"]>div:first-child {
         margin-bottom: 20px;
+    }
+
+    .native-english-overlay div[style*="grid-template-columns"]>div:last-child {
+        margin-top: 10px;
     }
 }

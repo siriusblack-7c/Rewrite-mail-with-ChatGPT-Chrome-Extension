@@ -14,7 +14,8 @@ A Chrome extension that integrates with Gmail to rewrite emails using ChatGPT, m
   - 🇿🇦 South African English (ZA)
 - **AI-Powered Rewriting**: Uses OpenAI's ChatGPT to improve grammar, word choice, and sentence structure
 - **Professional Tone**: Maintains the original meaning while making emails sound more professional and native
-- **Preview & Edit**: Shows side-by-side comparison with original text before applying changes
+- **Interactive Preview & Edit**: Shows side-by-side comparison with editable original and rewritten text
+- **Iterative Improvement**: Provide feedback like "make it more brief" or "add more details" to regenerate improved versions
 - **Safe Editing**: Original message remains intact until you approve the changes
 - **Easy to Use**: Simple one-click button in Gmail compose window with intuitive preview dialog
 - **Secure**: API key stored locally in your browser, never shared
@@ -61,10 +62,17 @@ A Chrome extension that integrates with Gmail to rewrite emails using ChatGPT, m
    - Look for the blue "Rewrite for [Your Selected Variant]" button in the compose toolbar (e.g., "Rewrite for British English")
    - Click the button to start the AI rewriting process
 
-4. **Preview and Edit**
-   - A preview dialog will appear showing your original text alongside the AI-improved version
-   - Edit the rewritten text directly in the dialog if needed
-   - Click "Accept Changes" to apply the improved text, or "Cancel" to keep your original
+4. **Preview, Edit, and Improve**
+   - A preview dialog will appear showing your original text (editable) alongside the AI-improved version
+   - Edit either the original or rewritten text directly in the dialog
+   - **Provide feedback**: Use the feedback box to request specific improvements like:
+     - "Make it more brief"
+     - "Add more details" 
+     - "Make it more formal"
+     - "Use simpler language"
+   - Click "🔄 Regenerate with Feedback" to get an improved version
+   - Repeat the feedback process as many times as needed
+   - Click "Accept Changes" to apply the final text, or "Cancel" to keep your original
 
 5. **Review and Send**
    - Your email now contains the improved text
@@ -139,6 +147,7 @@ For issues or questions:
 
 ## Version History
 
+- **v1.2**: Added interactive feedback system - users can provide specific feedback (e.g., "make it more brief") to iteratively improve the AI rewriting. Made original text editable in preview dialog.
 - **v1.1**: Added support for multiple English variants (US, UK, AU, CA, NZ, ZA) with region-specific prompts and terminology
 - **v1.0**: Initial release with basic Gmail integration and ChatGPT rewriting
 

@@ -232,6 +232,38 @@ class GmailRewriter {
     return data.choices[0].message.content;
   }
 
+  async rewriteWithFeedback(text, feedback) {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: this.getSystemPrompt(this.englishVariant)
+          },
+          {
+            role: 'user',
+            content: `Please rewrite the following email text. Additionally, please incorporate this specific feedback: "${feedback}"\n\nEmail text to rewrite:\n${text}`
+          }
+        ],
+        max_tokens: 1000,
+        temperature: 0.3
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+
   showPreviewDialog(composeWindow, originalText, rewrittenText, composeBody) {
     // Get the display name for the selected English variant
     const variantNames = {
@@ -291,9 +323,10 @@ class GmailRewriter {
             <h3 style="margin: 0 0 10px 0; color: #202124; font-size: 14px; font-weight: 500;">
               Original Text
             </h3>
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #e0e0e0; min-height: 150px; font-size: 14px; line-height: 1.5; white-space: pre-wrap;">
-              ${originalText}
-            </div>
+            <textarea 
+              id="originalTextArea" 
+              style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #e0e0e0; min-height: 150px; width: 100%; box-sizing: border-box; font-size: 14px; line-height: 1.5; font-family: inherit; resize: vertical;"
+            >${originalText}</textarea>
           </div>
           
           <div>
@@ -302,8 +335,25 @@ class GmailRewriter {
             </h3>
             <textarea 
               id="rewrittenTextArea" 
-              style="background: #e8f5e8; padding: 15px; border-radius: 4px; border: 1px solid #ceead6; min-height: 150px; width: 100%; box-sizing: border-box; font-size: 14px; line-height: 1.5; font-family: inherit; resize: vertical;"
+              style="background: #e8f5e8; padding: 15px; border-radius: 4px; border: 1px solid #ceead6; min-height: 150px; width: 100%; height: 100%; box-sizing: border-box; font-size: 14px; line-height: 1.5; font-family: inherit; resize: vertical;"
             >${rewrittenText}</textarea>
+            
+            <div style="margin-top: 15px;">
+              <h4 style="margin: 0 0 8px 0; color: #202124; font-size: 13px; font-weight: 500;">
+                Feedback for Improvement
+              </h4>
+              <textarea 
+                id="feedbackTextArea" 
+                placeholder="e.g., 'Make it more brief', 'Add more details', 'Make it more formal', 'Use simpler language'..."
+                style="background: #fff3e0; padding: 12px; border-radius: 4px; border: 1px solid #ffcc80; width: 100%; box-sizing: border-box; font-size: 13px; line-height: 1.4; font-family: inherit; resize: vertical; min-height: 60px;"
+              ></textarea>
+              <button 
+                id="regenerateBtn" 
+                style="margin-top: 8px; padding: 6px 12px; border: none; background: #ff9800; color: white; border-radius: 4px; font-size: 13px; cursor: pointer; font-weight: 500; width: 100%;"
+              >
+                🔄 Regenerate with Feedback
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -324,14 +374,17 @@ class GmailRewriter {
     // Handle button clicks
     const cancelBtn = dialog.querySelector('#cancelBtn');
     const acceptBtn = dialog.querySelector('#acceptBtn');
-    const textArea = dialog.querySelector('#rewrittenTextArea');
+    const rewrittenTextArea = dialog.querySelector('#rewrittenTextArea');
+    const originalTextArea = dialog.querySelector('#originalTextArea');
+    const feedbackTextArea = dialog.querySelector('#feedbackTextArea');
+    const regenerateBtn = dialog.querySelector('#regenerateBtn');
 
     cancelBtn.addEventListener('click', () => {
       document.body.removeChild(overlay);
     });
 
     acceptBtn.addEventListener('click', () => {
-      const finalText = textArea.value;
+      const finalText = rewrittenTextArea.value;
 
       // Update the compose body with the final text
       composeBody.innerHTML = finalText.replace(/\n/g, '<br>');
@@ -345,6 +398,47 @@ class GmailRewriter {
       this.showMessage('Email updated successfully!', 'success');
     });
 
+    regenerateBtn.addEventListener('click', async () => {
+      const currentText = originalTextArea.value.trim();
+      const feedback = feedbackTextArea.value.trim();
+
+      if (!currentText) {
+        this.showMessage('Please enter some text to rewrite.', 'error');
+        return;
+      }
+
+      if (!feedback) {
+        this.showMessage('Please provide feedback for improvement.', 'error');
+        return;
+      }
+
+      // Show loading state
+      const originalButtonText = regenerateBtn.innerHTML;
+      regenerateBtn.innerHTML = '🔄 Regenerating...';
+      regenerateBtn.disabled = true;
+
+      try {
+        // Call ChatGPT API with feedback
+        const newRewrittenText = await this.rewriteWithFeedback(currentText, feedback);
+
+        // Update the rewritten text area
+        rewrittenTextArea.value = newRewrittenText;
+
+        // Clear feedback
+        feedbackTextArea.value = '';
+
+        this.showMessage('Text regenerated successfully!', 'success');
+
+      } catch (error) {
+        console.error('Regenerate error:', error);
+        this.showMessage('Failed to regenerate text. Please try again.', 'error');
+      } finally {
+        // Restore button state
+        regenerateBtn.innerHTML = originalButtonText;
+        regenerateBtn.disabled = false;
+      }
+    });
+
     // Close on overlay click
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
@@ -352,10 +446,10 @@ class GmailRewriter {
       }
     });
 
-    // Focus the textarea
+    // Focus the rewritten textarea
     setTimeout(() => {
-      textArea.focus();
-      textArea.setSelectionRange(textArea.value.length, textArea.value.length);
+      rewrittenTextArea.focus();
+      rewrittenTextArea.setSelectionRange(rewrittenTextArea.value.length, rewrittenTextArea.value.length);
     }, 100);
   }
 

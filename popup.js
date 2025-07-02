@@ -56,7 +56,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         saveButton.disabled = true;
 
         try {
-            // Test the API key by making a simple request
+            // Test the API key and check billing/credits
+            showStatus('Validating API key and checking account...', 'info');
+
             const testResponse = await fetch('https://api.openai.com/v1/models', {
                 headers: {
                     'Authorization': `Bearer ${apiKey}`
@@ -64,7 +66,52 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             if (!testResponse.ok) {
-                throw new Error('Invalid API key');
+                if (testResponse.status === 401 || testResponse.status === 403) {
+                    throw new Error('Invalid API key. Please check your key and try again.');
+                }
+                throw new Error('API key validation failed. Please try again.');
+            }
+
+            // Check billing and credits
+            let billingStatus = { hasCredits: 'unknown', hasBilling: 'unknown' };
+            try {
+                const billingResponse = await fetch('https://api.openai.com/v1/dashboard/billing/credit_grants', {
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`
+                    }
+                });
+
+                if (billingResponse.ok) {
+                    const billingData = await billingResponse.json();
+
+                    const hasActiveCredits = billingData.grants && billingData.grants.some(grant =>
+                        grant.effective_at * 1000 <= Date.now() &&
+                        grant.expires_at * 1000 > Date.now() &&
+                        grant.used_amount < grant.granted_amount
+                    );
+
+                    // Check if billing is set up
+                    let hasBillingSetup = false;
+                    if (!hasActiveCredits) {
+                        try {
+                            const usageResponse = await fetch('https://api.openai.com/v1/dashboard/billing/usage', {
+                                headers: {
+                                    'Authorization': `Bearer ${apiKey}`
+                                }
+                            });
+                            hasBillingSetup = usageResponse.ok;
+                        } catch (e) {
+                            // Ignore billing check errors
+                        }
+                    }
+
+                    billingStatus = {
+                        hasCredits: hasActiveCredits,
+                        hasBilling: hasBillingSetup || hasActiveCredits
+                    };
+                }
+            } catch (e) {
+                // Billing check is optional, continue if it fails
             }
 
             // Save the API key and English variant
@@ -73,16 +120,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 englishVariant: englishVariant
             });
 
-            showStatus('Settings saved successfully!', 'success');
-
-            // Close popup after a short delay
-            setTimeout(() => {
-                window.close();
-            }, 1500);
+            // Show appropriate success message based on billing status
+            if (billingStatus.hasCredits === false && billingStatus.hasBilling === false) {
+                showStatus('⚠️ API key valid, but no billing setup detected. You may need to add a payment method and credits to use the extension.', 'warning');
+                // Don't auto-close, let user read the warning
+            } else if (billingStatus.hasCredits === false && billingStatus.hasBilling === true) {
+                showStatus('⚠️ API key valid, but credits may be exhausted. Check your OpenAI dashboard if the extension doesn\'t work.', 'warning');
+                // Don't auto-close, let user read the warning
+            } else {
+                showStatus('Settings saved successfully!', 'success');
+                // Close popup after a short delay
+                setTimeout(() => {
+                    window.close();
+                }, 1500);
+            }
 
         } catch (error) {
             console.error('Error testing API key:', error);
-            showStatus('Invalid API key. Please check and try again.', 'error');
+            showStatus(error.message || 'Invalid API key. Please check and try again.', 'error');
         } finally {
             // Restore button state
             saveButton.textContent = 'Save Settings';
@@ -95,11 +150,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusDiv.className = `status ${type}`;
         statusDiv.style.display = 'block';
 
-        // Hide status after 3 seconds for success messages
-        if (type === 'success') {
+        // Auto-hide based on message type
+        let hideDelay = 0;
+        switch (type) {
+            case 'success':
+                hideDelay = 3000;
+                break;
+            case 'info':
+                hideDelay = 2000;
+                break;
+            case 'warning':
+                hideDelay = 8000; // Longer for important warnings
+                break;
+            case 'error':
+                // Don't auto-hide errors
+                hideDelay = 0;
+                break;
+        }
+
+        if (hideDelay > 0) {
             setTimeout(() => {
                 statusDiv.style.display = 'none';
-            }, 3000);
+            }, hideDelay);
         }
     }
 

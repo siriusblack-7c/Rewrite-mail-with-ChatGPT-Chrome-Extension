@@ -46,6 +46,11 @@ class GmailRewriter {
   setupGmailIntegration() {
     this.observeComposeWindows();
     this.addRewriteButtonsToExistingCompose();
+
+    // Also scan for reply areas after a delay (they might load later)
+    setTimeout(() => {
+      this.addRewriteButtonsToExistingCompose();
+    }, 2000);
   }
 
   observeComposeWindows() {
@@ -53,7 +58,31 @@ class GmailRewriter {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (node.nodeType === 1) {
+            // Handle new compose dialogs
             node.querySelectorAll('[role="dialog"]').forEach(win => this.addRewriteButtonToCompose(win));
+
+            // Handle reply compose areas - look for any container with formatting toolbar
+            node.querySelectorAll('[role="toolbar"], .J-Z').forEach(toolbar => {
+              const composeContainer = toolbar.closest('[role="main"], .nH, .if, body') ||
+                toolbar.parentElement?.closest('[role="main"], .nH, .if, body') ||
+                document.body;
+              if (composeContainer && this.isReplyComposeArea(composeContainer)) {
+                setTimeout(() => this.addRewriteButtonToCompose(composeContainer), 100);
+              }
+            });
+
+            // Also check if the added node itself is a compose area
+            if (this.isReplyComposeArea(node)) {
+              setTimeout(() => this.addRewriteButtonToCompose(node), 100);
+            }
+
+            // Check for any contenteditable areas that might be reply compose
+            node.querySelectorAll('[contenteditable="true"]').forEach(editableArea => {
+              const container = editableArea.closest('[role="main"], .if, .nH, body') || document.body;
+              if (this.isReplyComposeArea(container)) {
+                setTimeout(() => this.addRewriteButtonToCompose(container), 100);
+              }
+            });
           }
         }
       }
@@ -61,8 +90,57 @@ class GmailRewriter {
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
+  isReplyComposeArea(element) {
+    // Check if this element contains a reply compose interface
+    if (!element.querySelector) return false;
+
+    const hasEditableArea = element.querySelector('[role="textbox"][aria-label*="Message Body"]') ||
+      element.querySelector('.Am.Al.editable') ||
+      element.querySelector('[contenteditable="true"][aria-label*="Message"]') ||
+      element.querySelector('[contenteditable="true"]');
+
+    const hasToolbar = element.querySelector('[role="toolbar"]') ||
+      element.querySelector('.J-Z') ||
+      element.querySelector('[command="+bold"]') ||
+      element.querySelector('[command="+italic"]') ||
+      element.querySelector('[aria-label*="Bold"]') ||
+      element.querySelector('[aria-label*="Italic"]');
+
+    return hasEditableArea && hasToolbar;
+  }
+
   addRewriteButtonsToExistingCompose() {
+    // Handle existing compose dialogs
     document.querySelectorAll('[role="dialog"]').forEach(win => this.addRewriteButtonToCompose(win));
+
+    // Handle existing reply compose areas - check document body and main containers
+    const containersToCheck = [
+      document.body,
+      ...document.querySelectorAll('[role="main"]'),
+      ...document.querySelectorAll('.nH'),
+      ...document.querySelectorAll('.if'),
+      ...document.querySelectorAll('.AD'),
+      ...document.querySelectorAll('.hx')
+    ];
+
+    containersToCheck.forEach(container => {
+      if (this.isReplyComposeArea(container)) {
+        this.addRewriteButtonToCompose(container);
+      }
+    });
+
+    // Also look for any toolbar and try to find its compose area
+    document.querySelectorAll('[role="toolbar"], .J-Z').forEach(toolbar => {
+      if (toolbar.querySelector('[command="+bold"], [command="+italic"], [aria-label*="Bold"], [aria-label*="Italic"]')) {
+        const container = toolbar.closest('[role="main"]') ||
+          toolbar.closest('.nH') ||
+          toolbar.closest('.if') ||
+          document.body;
+        if (this.isReplyComposeArea(container)) {
+          this.addRewriteButtonToCompose(container);
+        }
+      }
+    });
   }
 
   addRewriteButtonToCompose(composeWindow) {
@@ -90,13 +168,9 @@ class GmailRewriter {
       }
 
       if (toolbar) {
-        console.log('Found toolbar:', toolbar);
         this.createRewriteButton(composeWindow, toolbar);
       } else if (attempts < 20) { // Try for 10 seconds (500ms * 20)
-        console.log(`Toolbar search attempt ${attempts + 1}/20`);
         setTimeout(() => waitForToolbar(attempts + 1), 500);
-      } else {
-        console.log('Failed to find toolbar after 20 attempts');
       }
     };
 
@@ -186,14 +260,23 @@ class GmailRewriter {
 
   async handleRewrite(composeWindow) {
     if (!this.apiKey) return this.showMessage('Please set your OpenAI API key in the extension popup first.', 'error');
-    const composeBody = composeWindow.querySelector('[role="textbox"][aria-label*="Message Body"]');
+
+    // Try multiple selectors to find the compose body (for both compose and reply)
+    let composeBody = composeWindow.querySelector('[role="textbox"][aria-label*="Message Body"]') ||
+      composeWindow.querySelector('.Am.Al.editable[contenteditable="true"]') ||
+      composeWindow.querySelector('[contenteditable="true"][aria-label*="Message"]') ||
+      composeWindow.querySelector('.editable[contenteditable="true"]');
+
     if (!composeBody) return this.showMessage('Could not find email content to rewrite.', 'error');
+
     const originalText = composeBody.innerText.trim();
     if (!originalText) return this.showMessage('Please enter some text to rewrite.', 'error');
+
     const button = composeWindow.querySelector('.rewrite-button');
     const originalButtonText = button.innerHTML;
     button.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="spinning"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg><span>...</span>`;
     button.disabled = true;
+
     try {
       const rewrittenText = await this.rewriteWithChatGPT(originalText);
       this.showPreviewDialog(composeWindow, originalText, rewrittenText, composeBody);

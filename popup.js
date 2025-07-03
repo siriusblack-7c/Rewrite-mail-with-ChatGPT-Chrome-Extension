@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (errorMsg === 'BILLING_REQUIRED') {
                 showBillingRequiredMessage();
             } else if (errorMsg === 'RATE_LIMITED') {
-                showDetailedStatus('Rate Limited', 'Your API key works but you\'re making requests too quickly. Please wait a moment and try again.', 'warning');
+                showDetailedStatus('Rate Limited', 'Your API key works but you\'re making requests too quickly. Please wait a moment and try again. Or you don\'t have enough credits to process requests. You can upgrade to a paid plan to avoid rate limiting. ', 'warning');
             } else if (errorMsg.startsWith('NETWORK_ERROR_STEP1')) {
                 showDetailedStatus('Network Error (Step 1)', `Failed to connect to OpenAI for initial validation. ${errorMsg.split(': ')[1] || 'Check your internet connection.'}`, 'error');
             } else if (errorMsg.startsWith('NETWORK_ERROR_STEP2')) {

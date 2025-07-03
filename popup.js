@@ -135,10 +135,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             showDetailedStatus('Settings Saved Successfully', 'Your API key is working and settings have been saved. The extension is now ready to rewrite your emails!', 'success');
 
-            // Do not close the popup after saving settings
-            // setTimeout(() => {
-            //     window.close();
-            // }, 2000);
+            // Notify all tabs to refresh rewrite buttons immediately
+            chrome.tabs && chrome.tabs.query && chrome.tabs.sendMessage && chrome.tabs.query({}, function (tabs) {
+                for (let tab of tabs) {
+                    chrome.tabs.sendMessage(tab.id, { action: "refreshRewriteButtons" });
+                }
+            });
 
         } catch (error) {
             // Handle specific error types with detailed information

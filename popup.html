@@ -389,6 +389,15 @@
             font-weight: 700;
         }
 
+        #helpPage ul {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #helpPage ul li {
+            margin-left: -45px;
+        }
+
         /* Responsive design */
         @media (max-width: 470px) {
             body {
@@ -462,23 +471,60 @@
 
         <!-- Help Page -->
         <div id="helpPage" class="page hidden">
-            <button class="return-btn" id="returnButton">
-                <span>← Return to Settings</span>
-            </button>
-
-            <div class="help-page">
-                <strong>✨ How to use:</strong><br>
-                1. Set your OpenAI API key and preferred English variant<br>
-                2. Open Gmail and compose a new email<br>
-                3. Write your email content<br>
-                4. Click the "Rewrite for [Your Selected Variant]" button<br>
-                5. Review and accept the improved text!
-
-                <div class="feature-badges">
-                    <span class="badge">Smart Signatures</span>
-                    <span class="badge">Format Preservation</span>
-                    <span class="badge">Interactive Feedback</span>
+            <div id="helpContent"
+                style="max-width: 440px; margin: 0 auto; background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%); border-radius: 14px; box-shadow: 0 2px 12px rgba(60,72,120,0.08); padding: 16px 12px 12px 12px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                <h2
+                    style="margin-bottom: 10px; font-size: 1.15em; color: #3730a3; display: flex; align-items: center; gap: 7px; font-weight: 800;">
+                    <span style='font-size: 1.1em;'>💡</span> Help & Guide
+                </h2>
+                <ol style="font-size: 13px; color: #374151; line-height: 1.5; padding-left: 16px; margin-bottom: 8px;">
+                    <li style='margin-bottom: 7px;'><b>Get your OpenAI API key:</b><br>
+                        <a href='https://platform.openai.com/api-keys' target='_blank'
+                            style='color: #6366f1; text-decoration: underline; font-weight: 600;'>Go to OpenAI API
+                            Keys</a> and click <span
+                            style='background: #eef2ff; color: #3730a3; border-radius: 4px; padding: 1px 4px; font-size: 0.95em;'>Create
+                            new secret key</span>. Copy the key (starts with <code>sk-</code>).
+                    </li>
+                    <li style='margin-bottom: 7px;'><b>Add credits and set up billing:</b><br>
+                        <a href='https://platform.openai.com/settings/organization/billing/overview' target='_blank'
+                            style='color: #6366f1; text-decoration: underline; font-weight: 600;'>Go to OpenAI
+                            Billing</a>.<br>
+                        <ul style='margin-left: 14px; margin-top: 3px; margin-bottom: 3px; font-size: 12px;'>
+                            <li>Add a payment method (credit card, etc.).</li>
+                            <li>Purchase credits (required even if you finished the free trial).</li>
+                            <li>Check your balance to ensure you have enough credits.</li>
+                        </ul>
+                    </li>
+                    <li style='margin-bottom: 7px;'><b>Enter your API key in the extension:</b><br>
+                        Paste your API key into the field and select your preferred English variant.<br>
+                        Click <span
+                            style='background: #fef9c3; color: #b45309; border-radius: 4px; padding: 1px 4px; font-size: 0.95em;'>Save
+                            Settings</span>.
+                    </li>
+                    <li style='margin-bottom: 7px;'><b>Troubleshooting:</b>
+                        <ul style='margin-left: 14px; margin-top: 3px; font-size: 12px;'>
+                            <li><b>Billing/Credits Warning:</b> Make sure you have added a payment method and purchased
+                                credits.</li>
+                            <li><b>Network Error:</b> Check your internet connection and try again.</li>
+                            <li><b>Authentication Error:</b> Double-check your API key (should start with
+                                <code>sk-</code>).
+                            </li>
+                            <li><b>Still need help?</b> <a href='https://help.openai.com/' target='_blank'
+                                    style='color: #6366f1; text-decoration: underline; font-weight: 600;'>OpenAI Help
+                                    Center</a></li>
+                        </ul>
+                    </li>
+                </ol>
+                <div
+                    style='margin-top: 10px; background: #f1f5f9; border-radius: 6px; padding: 7px 10px; color: #334155; font-size: 12px; display: flex; align-items: center; gap: 7px;'>
+                    <span style='font-size: 1em;'>✨</span>
+                    <span><b>Tip:</b> Access this guide anytime via <span
+                            style='background: #e0e7ff; color: #3730a3; border-radius: 4px; padding: 1px 4px;'>Help &
+                            Guide</span> at the bottom.</span>
                 </div>
+                <button id='returnButton'
+                    style='margin-top: 16px; padding: 7px 16px; background: linear-gradient(90deg, #6366f1 0%, #3730a3 100%); color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 4px rgba(99,102,241,0.08); transition: background 0.2s;'>←
+                    Back to Settings</button>
             </div>
         </div>
     </div>

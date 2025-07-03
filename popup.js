@@ -270,37 +270,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         mainPage.classList.add('hidden');
         helpPage.classList.remove('hidden');
         helpPage.classList.add('visible');
-        // Step-by-step help content
-        helpPage.innerHTML = `
-            <h2 style='margin-bottom: 10px;'>Help & Guide</h2>
-            <ol style='font-size: 14px; color: #374151; line-height: 1.7; padding-left: 18px;'>
-                <li><b>Get your OpenAI API key:</b><br>
-                    <a href='https://platform.openai.com/api-keys' target='_blank'>Go to OpenAI API Keys</a> and click "Create new secret key". Copy the key (starts with <code>sk-</code>).
-                </li>
-                <li style='margin-top: 10px;'><b>Add credits and set up billing:</b><br>
-                    <a href='https://platform.openai.com/settings/organization/billing/overview' target='_blank'>Go to OpenAI Billing</a>.<br>
-                    <ul style='margin-left: 18px;'>
-                        <li>Add a payment method (credit card, etc.).</li>
-                        <li>Purchase credits (required even if you finished the free trial).</li>
-                        <li>Check your balance to ensure you have enough credits.</li>
-                    </ul>
-                </li>
-                <li style='margin-top: 10px;'><b>Enter your API key in the extension:</b><br>
-                    Paste your API key into the field and select your preferred English variant.<br>
-                    Click <b>Save Settings</b>.
-                </li>
-                <li style='margin-top: 10px;'><b>Troubleshooting:</b>
-                    <ul style='margin-left: 18px;'>
-                        <li><b>Billing/Credits Warning:</b> Make sure you have added a payment method and purchased credits.</li>
-                        <li><b>Network Error:</b> Check your internet connection and try again.</li>
-                        <li><b>Authentication Error:</b> Double-check your API key (should start with <code>sk-</code>).</li>
-                        <li><b>Still need help?</b> <a href='https://help.openai.com/' target='_blank'>OpenAI Help Center</a></li>
-                    </ul>
-                </li>
-            </ol>
-            <button id='returnButton' style='margin-top: 18px; padding: 8px 18px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer;'>Back</button>
-        `;
-        document.getElementById('returnButton').addEventListener('click', showMainPage);
+        // Just wire up the return button for the static help content
+        document.getElementById('returnButton').onclick = showMainPage;
     }
 
     function showMainPage() {

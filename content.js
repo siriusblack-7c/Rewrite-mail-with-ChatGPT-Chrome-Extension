@@ -119,8 +119,7 @@ class GmailRewriter {
         document.querySelector('[class*="boomerang"], [class*="mixmax"], [class*="streak"]')
       ];
 
-      if (conflicts[0]) console.warn('Gmail Rewriter: Grammarly detected. This may cause conflicts.');
-      if (conflicts[1]) console.warn('Gmail Rewriter: Other Gmail extensions detected.');
+      // Extension conflict detection completed
     }, 3000);
   }
 
@@ -380,13 +379,11 @@ class GmailRewriter {
         (document.querySelector('.nH') || document.querySelector('[role="banner"]'));
 
       if (gmailLoaded) {
-        console.log('Gmail Rewriter: Gmail detected, setting up integration...');
         this.setupGmailIntegration();
       } else if (checkAttempts < maxAttempts) {
         checkAttempts++;
         setTimeout(checkGmailLoaded, 1000);
       } else {
-        console.warn('Gmail Rewriter: Gmail not detected after 30 seconds, trying minimal setup...');
         this.setupGmailIntegration(); // Try anyway
       }
     };
@@ -403,7 +400,6 @@ class GmailRewriter {
     const checkUrlChange = () => {
       if (location.href !== lastUrl) {
         lastUrl = location.href;
-        console.log('Gmail Rewriter: URL changed, refreshing integration...');
         this.clearSelectorCache();
 
         // Wait a bit for new content to load, then refresh buttons
@@ -455,7 +451,6 @@ class GmailRewriter {
 
       // If we find compose areas without buttons, do a scan
       if (potentialComposeAreas > existingButtons) {
-        console.log('Gmail Rewriter: Periodic scan detected missing buttons, refreshing...');
         this.addRewriteButtonsToExistingCompose();
       }
     }, 10000);
@@ -639,7 +634,6 @@ class GmailRewriter {
           if (contentArea) {
             const nearbyContainer = contentArea.parentElement?.querySelector('div') || contentArea.parentElement;
             if (nearbyContainer && !nearbyContainer.querySelector('.native-english-rewrite-btn')) {
-              console.log('Gmail Rewriter: Creating button in fallback location');
               this.createRewriteButton(composeWindow, nearbyContainer);
             }
           }
@@ -670,7 +664,74 @@ class GmailRewriter {
     rewriteBtn.innerHTML = `<button class="rewrite-button" title="Rewrite for ${this.englishVariant}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.01-4.65.51-6.84L9.37 4.5C8.16 3.42 6.49 3.42 5.28 4.5l-1.5 1.31C2.57 6.87 2.3 7.96 2.66 9c.36 1.04 1.2 1.88 2.24 2.24 1.04.36 2.13.09 3.19-.57l.03.03L5.58 13.8c-.35.35-.35.92 0 1.27.35.35.92.35 1.27 0l2.54-2.54.03.03c1.66 1.66 4.38 1.66 6.04 0l1.41-1.41c.39-.39.39-1.02 0-1.41-.39-.39-1.02-.39-1.41 0l-1.41 1.41c-.78.78-2.05.78-2.83 0-.78-.78-.78-2.05 0-2.83l1.41-1.41c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41l-1.41 1.41z"/></svg>${this.englishVariant}</button>`;
 
     rewriteBtn.querySelector('.rewrite-button').addEventListener('click', () => this.handleRewrite(composeWindow));
-    toolbar.appendChild(rewriteBtn);
+    // Try to find the .aDh container (Gmail action bar area)
+    const aDh = composeWindow.querySelector('.aDh');
+    let inserted = false;
+    if (aDh) {
+      const table = aDh.querySelector('table');
+      if (table) {
+        const rows = Array.from(table.querySelectorAll('tr'));
+        for (const row of rows) {
+          const trashCell = Array.from(row.querySelectorAll('td')).find(td => td.querySelector('div.J-J5-Ji.bty > div.T-I-ax7[aria-label*="Discard draft" i], div.J-J5-Ji.bty > div.T-I-ax7[data-tooltip*="Discard draft" i]'));
+          if (trashCell) {
+            // Insert the rewrite button before the trash button in this cell
+            const trashBtn = trashCell.querySelector('div.J-J5-Ji.bty > div.T-I-ax7[aria-label*="Discard draft" i], div.J-J5-Ji.bty > div.T-I-ax7[data-tooltip*="Discard draft" i]');
+            if (trashBtn && trashBtn.parentNode) {
+              trashBtn.parentNode.insertBefore(rewriteBtn, trashBtn);
+              inserted = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+    if (!inserted) {
+      // Fallback to previous toolbar logic
+      const allToolbars = Array.from(composeWindow.querySelectorAll('[role="toolbar"], .J-Z, .aoD.hl, .Am.Al .Au'));
+      let actionToolbar = null;
+      let deleteBtn = null;
+      for (const tb of allToolbars) {
+        deleteBtn = tb.querySelector('div.J-J5-Ji.bty > div.T-I-ax7[aria-label*="Discard draft" i], div.J-J5-Ji.bty > div.T-I-ax7[data-tooltip*="Discard draft" i]');
+        if (!deleteBtn) {
+          const possibleDeleteSelectors = [
+            '[aria-label*="delete" i]',
+            '[data-tooltip*="delete" i]',
+            '[title*="delete" i]',
+            '[aria-label*="discard draft" i]',
+            '[data-tooltip*="discard draft" i]'
+          ];
+          for (const sel of possibleDeleteSelectors) {
+            deleteBtn = tb.querySelector(sel);
+            if (deleteBtn) break;
+          }
+        }
+        if (!deleteBtn) {
+          const trashIconPath = 'M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-4.5l-1-1z';
+          const candidates = Array.from(tb.querySelectorAll('button,div'));
+          for (const el of candidates) {
+            const svg = el.querySelector('svg');
+            if (svg && svg.innerHTML.includes(trashIconPath)) {
+              deleteBtn = el;
+              break;
+            }
+          }
+        }
+        if (deleteBtn) {
+          actionToolbar = tb;
+          break;
+        }
+      }
+      if (actionToolbar && deleteBtn && deleteBtn.parentNode) {
+        deleteBtn.parentNode.insertBefore(rewriteBtn, deleteBtn);
+      } else {
+        const fallbackToolbar = allToolbars[allToolbars.length - 1];
+        if (fallbackToolbar) {
+          fallbackToolbar.appendChild(rewriteBtn);
+        } else {
+          toolbar.appendChild(rewriteBtn);
+        }
+      }
+    }
   }
 
   // Optimized text extraction
@@ -751,7 +812,6 @@ class GmailRewriter {
   }
 
   handleRewriteError(error) {
-    console.error('Rewrite error:', error);
 
     if (error.message.includes('401') || error.message.includes('403')) {
       this.showMessage('Invalid API key. Please check your OpenAI API key in the extension popup.', 'error');
@@ -907,12 +967,14 @@ class GmailRewriter {
           <div class="gorgeous-content-section">
             <h3>✨ Rewritten Text</h3>
             <textarea id="rewrittenTextArea" class="gorgeous-text-area gorgeous-rewritten-area">${rewrittenText}</textarea>
-            <div class="gorgeous-feedback-section">
-              <h4 class="gorgeous-feedback-title">💬 Feedback for Improvement</h4>
-              <textarea id="feedbackTextArea" class="gorgeous-feedback-area" placeholder="e.g., 'Make it more brief', 'Add more details', 'Make it more formal', 'Use simpler language'..."></textarea>
-              <button id="regenerateBtn" class="gorgeous-regenerate-btn">🔄 Regenerate with Feedback</button>
-            </div>
           </div>
+        </div>
+      </div>
+      <div class="gorgeous-feedback-section">
+        <h4 class="gorgeous-feedback-title">💬 Feedback for Improvement</h4>
+        <div class="gorgeous-feedback-area-container">
+          <textarea id="feedbackTextArea" class="gorgeous-feedback-area" placeholder="e.g., 'Make it more brief', 'Add more details', 'Make it more formal', 'Use simpler language'..."></textarea>
+          <button id="regenerateBtn" class="gorgeous-regenerate-btn">♻ Regenerate</button>
         </div>
       </div>
       <div class="gorgeous-dialog-footer">
@@ -947,7 +1009,7 @@ class GmailRewriter {
 
       const btn = e.target;
       const originalButtonText = btn.innerHTML;
-      btn.innerHTML = '🔄 Regenerating...';
+      btn.innerHTML = '♻ Regenerating...';
       btn.disabled = true;
 
       try {
@@ -975,7 +1037,6 @@ class GmailRewriter {
   }
 
   handleRegenerateError(error) {
-    console.error('Regenerate error:', error);
 
     if (error.message.includes('401') || error.message.includes('403')) {
       this.showMessage('Invalid API key. Please check your OpenAI API key.', 'error');
@@ -1030,4 +1091,4 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => new GmailRewriter());
 } else {
   new GmailRewriter();
-} 
+}

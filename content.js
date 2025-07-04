@@ -951,7 +951,7 @@ class GmailRewriter {
     overlay.style.cssText = `position: fixed;top: 0;left: 0;right: 0;bottom: 0;background: rgba(0, 0, 0, 0.7);backdrop-filter: blur(8px);z-index: 10001;display: flex;align-items: center;justify-content: center;font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;`;
 
     const dialog = document.createElement('div');
-    dialog.style.cssText = `background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);border-radius: 10px;box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);max-width: 900px;max-height: 85vh;width: 95%;overflow: hidden;display: flex;flex-direction: column;position: relative;`;
+    dialog.style.cssText = `background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);border-radius: 10px;box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);max-width: 1100px;max-height: 85vh;width: 98%;overflow: hidden;display: flex;flex-direction: column;position: relative;`;
 
     dialog.innerHTML = `
       <div class="gorgeous-dialog-header">
@@ -959,10 +959,22 @@ class GmailRewriter {
         <p class="gorgeous-dialog-subtitle">Review the changes and choose to accept, edit, or cancel</p>
       </div>
       <div class="gorgeous-dialog-content">
-        <div class="gorgeous-content-grid">
+        <div class="gorgeous-content-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
           <div class="gorgeous-content-section">
             <h3>📝 Original Text</h3>
             <textarea id="originalTextArea" class="gorgeous-text-area gorgeous-original-area">${originalText}</textarea>
+            <div style="margin-top: 8px; text-align: left; display: flex; gap: 10px; align-items: center;">
+              <button id="speechInputBtn" style="padding: 6px 14px; border-radius: 8px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <span style='font-size: 16px;'>🎤</span> Speech Input
+              </button>
+              <button id="translateBtn" style="padding: 6px 14px; border-radius: 8px; border: none; background: linear-gradient(135deg, #38b2ac 0%, #4299e1 100%); color: white; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <span style='font-size: 16px;'>🌐</span> Translate
+              </button>
+            </div>
+          </div>
+          <div class="gorgeous-content-section">
+            <h3>🌐 Translated Text</h3>
+            <textarea id="translatedTextArea" class="gorgeous-text-area gorgeous-translated-area" placeholder="(Translation will appear here)"></textarea>
           </div>
           <div class="gorgeous-content-section">
             <h3>✨ Rewritten Text</h3>

@@ -988,6 +988,7 @@ class GmailRewriter {
           <textarea id="feedbackTextArea" class="gorgeous-feedback-area" placeholder="e.g., 'Make it more brief', 'Add more details', 'Make it more formal', 'Use simpler language'..."></textarea>
           <button id="regenerateBtn" class="gorgeous-regenerate-btn">♻ Regenerate</button>
         </div>
+        <div id="feedbackSuggestions" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
       </div>
       <div class="gorgeous-dialog-footer">
         <button id="cancelBtn" class="gorgeous-footer-btn gorgeous-cancel-btn">✖ Cancel</button>
@@ -1013,7 +1014,9 @@ class GmailRewriter {
     });
 
     dialog.querySelector('#regenerateBtn').addEventListener('click', async (e) => {
-      const currentText = dialog.querySelector('#originalTextArea').value.trim();
+      // Use translated text if available, otherwise use original text
+      const translatedText = dialog.querySelector('#translatedTextArea').value.trim();
+      const currentText = translatedText ? translatedText : dialog.querySelector('#originalTextArea').value.trim();
       const feedback = dialog.querySelector('#feedbackTextArea').value.trim();
 
       if (!currentText) return this.showMessage('Please enter some text to rewrite.', 'error');
@@ -1036,6 +1039,166 @@ class GmailRewriter {
         btn.disabled = false;
       }
     });
+
+    // Add event listener for Translate button
+    setTimeout(() => {
+      const translateBtn = dialog.querySelector('#translateBtn');
+      const originalTextArea = dialog.querySelector('#originalTextArea');
+      const translatedTextArea = dialog.querySelector('#translatedTextArea');
+      if (translateBtn && originalTextArea && translatedTextArea) {
+        translateBtn.addEventListener('click', async () => {
+          const textToTranslate = originalTextArea.value.trim();
+          if (!textToTranslate) {
+            this.showMessage('Please enter text to translate.', 'error');
+            return;
+          }
+          translatedTextArea.value = 'Translating...';
+          translateBtn.disabled = true;
+          try {
+            // Get Google Translate API key and target language from chrome.storage
+            const settings = await new Promise(resolve => {
+              chrome.storage.sync.get(['googleTranslateApiKey', 'targetLanguage'], resolve);
+            });
+            const apiKey = settings.googleTranslateApiKey;
+            const targetLanguage = settings.targetLanguage && settings.targetLanguage.code;
+            if (!apiKey || !targetLanguage) {
+              translatedTextArea.value = '';
+              this.showMessage('Google Translate API key or target language not set. Please check extension settings.', 'error');
+              translateBtn.disabled = false;
+              return;
+            }
+            // Call Google Translate API
+            const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                q: textToTranslate,
+                target: targetLanguage
+              })
+            });
+            const data = await response.json();
+            if (data && data.data && data.data.translations && data.data.translations[0]) {
+              translatedTextArea.value = data.data.translations[0].translatedText;
+              this.showMessage('Translation complete!', 'success');
+            } else if (data.error && data.error.message) {
+              translatedTextArea.value = '';
+              this.showMessage('Translation error: ' + data.error.message, 'error');
+            } else {
+              translatedTextArea.value = '';
+              this.showMessage('Unknown translation error.', 'error');
+            }
+          } catch (err) {
+            translatedTextArea.value = '';
+            this.showMessage('Failed to translate. Please check your API key and network.', 'error');
+          } finally {
+            translateBtn.disabled = false;
+          }
+        });
+      }
+    }, 200);
+
+    // Add event listener for Speech Input button
+    setTimeout(() => {
+      const speechBtn = dialog.querySelector('#speechInputBtn');
+      const originalTextArea = dialog.querySelector('#originalTextArea');
+      let recognition = null;
+      let listening = false;
+      let fullTranscript = '';
+      if (speechBtn && originalTextArea) {
+        speechBtn.addEventListener('click', () => {
+          if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            this.showMessage('Speech recognition is not supported in this browser.', 'error');
+            return;
+          }
+          if (listening) {
+            if (recognition) recognition.stop();
+            listening = false;
+            speechBtn.innerHTML = "<span style='font-size: 16px;'>🎤</span> Speech Input";
+            return;
+          }
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          recognition = new SpeechRecognition();
+          recognition.lang = 'auto';
+          recognition.interimResults = true;
+          recognition.maxAlternatives = 1;
+          listening = true;
+          fullTranscript = originalTextArea.value || '';
+          speechBtn.innerHTML = "<span style='font-size: 16px;'>🛑</span> Listening...";
+          recognition.onresult = (event) => {
+            let interim = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              const result = event.results[i];
+              if (result.isFinal) {
+                fullTranscript += (fullTranscript && !fullTranscript.endsWith(' ') ? ' ' : '') + result[0].transcript;
+              } else {
+                interim += result[0].transcript;
+              }
+            }
+            originalTextArea.value = (fullTranscript + (interim ? (fullTranscript && !fullTranscript.endsWith(' ') ? ' ' : '') + interim : '')).trim();
+          };
+          recognition.onerror = (event) => {
+            listening = false;
+            speechBtn.innerHTML = "<span style='font-size: 16px;'>🎤</span> Speech Input";
+            this.showMessage('Speech recognition error: ' + event.error, 'error');
+          };
+          recognition.onend = () => {
+            if (listening) {
+              listening = false;
+              speechBtn.innerHTML = "<span style='font-size: 16px;'>🎤</span> Speech Input";
+            }
+            this.showMessage('Speech input complete!', 'success');
+          };
+          recognition.start();
+        });
+      }
+    }, 200);
+
+    // Add feedback suggestion buttons
+    setTimeout(() => {
+      const suggestions = [
+        'Make it more simple',
+        'Make it more formal',
+        'Add more details',
+        'Make it more brief',
+        'Use friendlier tone',
+        'Use simpler language',
+        'Make it more polite',
+        'Add a call to action'
+      ];
+      const feedbackSuggestions = dialog.querySelector('#feedbackSuggestions');
+      const feedbackTextArea = dialog.querySelector('#feedbackTextArea');
+      if (feedbackSuggestions && feedbackTextArea) {
+        feedbackSuggestions.innerHTML = '';
+        suggestions.forEach(text => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = text;
+          btn.style.cssText = `
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+            border-radius: 7px;
+            font-size: 13px;
+            padding: 4px 10px;
+            margin: 0;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: inherit;
+          `;
+          btn.addEventListener('mouseenter', () => btn.style.background = '#e0e7ef');
+          btn.addEventListener('mouseleave', () => btn.style.background = '#f3f4f6');
+          btn.addEventListener('click', () => {
+            let current = feedbackTextArea.value.trim();
+            if (current && !current.endsWith(',')) current += ', ';
+            if (current && !current.endsWith(', ')) current += ' ';
+            if (current && current.includes(text)) return; // avoid duplicate
+            feedbackTextArea.value = current + text;
+            feedbackTextArea.focus();
+          });
+          feedbackSuggestions.appendChild(btn);
+        });
+      }
+    }, 200);
 
     overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
     overlay.appendChild(dialog);

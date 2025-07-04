@@ -3,8 +3,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('settingsForm');
     const apiKeyInput = document.getElementById('apiKey');
     const englishVariantSelect = document.getElementById('englishVariant');
-    const saveButton = document.getElementById('saveButton');
-    const statusDiv = document.getElementById('status');
+    const saveOpenAIBtn = document.getElementById('saveOpenAIBtn');
+    const saveGoogleBtn = document.getElementById('saveGoogleBtn');
+    const openaiStatusDiv = document.getElementById('openaiStatus');
+    const googleStatusDiv = document.getElementById('googleStatus');
     const googleTranslateApiKeyInput = document.getElementById('googleTranslateApiKey');
     const languageSearchInput = document.getElementById('languageSearch');
     const languageDropdown = document.getElementById('languageDropdown');
@@ -137,26 +139,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load existing settings
     await loadSettings();
 
-    // Handle form submission
-    form.addEventListener('submit', async (e) => {
+    // Handle button clicks
+    saveOpenAIBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        await saveSettings();
+        await saveOpenAISettings();
+    });
+
+    saveGoogleBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await saveGoogleTranslateSettings();
     });
 
     async function loadSettings() {
         try {
             const result = await chrome.storage.sync.get(['openaiApiKey', 'englishVariant', 'googleTranslateApiKey', 'targetLanguage']);
+            // Always leave the input fields empty
+            apiKeyInput.value = '';
+            googleTranslateApiKeyInput.value = '';
+            // Show status for OpenAI key
+            const openaiKeyStatus = document.getElementById('openaiKeyStatus');
             if (result.openaiApiKey) {
-                apiKeyInput.value = result.openaiApiKey;
+                openaiKeyStatus.textContent = '✔️ Saved';
+                openaiKeyStatus.style.color = '#38a169';
+            } else {
+                openaiKeyStatus.textContent = '❌ Not set';
+                openaiKeyStatus.style.color = '#e53e3e';
+            }
+            // Show status for Google key
+            const googleKeyStatus = document.getElementById('googleKeyStatus');
+            if (result.googleTranslateApiKey) {
+                googleKeyStatus.textContent = '✔️ Saved';
+                googleKeyStatus.style.color = '#38a169';
+            } else {
+                googleKeyStatus.textContent = '❌ Not set';
+                googleKeyStatus.style.color = '#e53e3e';
             }
             if (result.englishVariant) {
                 englishVariantSelect.value = result.englishVariant;
             } else {
-                // Default to US English
                 englishVariantSelect.value = 'US';
-            }
-            if (result.googleTranslateApiKey) {
-                googleTranslateApiKeyInput.value = result.googleTranslateApiKey;
             }
             if (result.targetLanguage) {
                 const lang = supportedLanguages.find(l => l.code === result.targetLanguage.code || l.name === result.targetLanguage.name);
@@ -170,184 +191,253 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    async function saveSettings() {
+    // Clear status when user types a new value
+    apiKeyInput.addEventListener('input', () => {
+        document.getElementById('openaiKeyStatus').textContent = '';
+    });
+    googleTranslateApiKeyInput.addEventListener('input', () => {
+        document.getElementById('googleKeyStatus').textContent = '';
+    });
+
+    async function saveOpenAISettings() {
         const apiKey = apiKeyInput.value.trim();
         const englishVariant = englishVariantSelect.value;
-        const googleTranslateApiKey = googleTranslateApiKeyInput.value.trim();
-        const targetLanguage = selectedLanguage;
-
+        let keyToUse = apiKey;
+        // Allow language-only change if key is empty but one exists
         if (!apiKey) {
-            showStatus('Please enter your OpenAI API key', 'error');
+            const result = await chrome.storage.sync.get(['openaiApiKey']);
+            if (result.openaiApiKey) {
+                keyToUse = result.openaiApiKey;
+            } else {
+                showStatus('Please enter your OpenAI API key', 'error', 'openai');
+                return;
+            }
+        }
+        if (!keyToUse.startsWith('sk-')) {
+            showStatus('Invalid API key format. Should start with "sk-"', 'error', 'openai');
             return;
         }
-
-        if (!apiKey.startsWith('sk-')) {
-            showStatus('Invalid API key format. Should start with "sk-"', 'error');
-            return;
-        }
-
         if (!englishVariant) {
-            showStatus('Please select an English variant', 'error');
+            showStatus('Please select an English variant', 'error', 'openai');
             return;
         }
-
-        if (!googleTranslateApiKey) {
-            showStatus('Please enter your Google Translate API key', 'error');
-            return;
-        }
-
-        if (!targetLanguage) {
-            showStatus('Please select a target language', 'error');
-            return;
-        }
-
-        // Show loading state
-        saveButton.textContent = 'Saving...';
-        saveButton.disabled = true;
-
+        saveOpenAIBtn.textContent = 'Saving...';
+        saveOpenAIBtn.disabled = true;
         try {
-            // Step 1: Test API key validity
-            showStatus('Validating API key...', 'info');
-
-            let modelsResponse;
-            try {
-                modelsResponse = await fetch('https://api.openai.com/v1/models', {
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`
-                    }
-                });
-            } catch (fetchError) {
-                throw new Error(`NETWORK_ERROR_STEP1: ${fetchError.message}`);
-            }
-
-            if (!modelsResponse.ok) {
-                if (modelsResponse.status === 401 || modelsResponse.status === 403) {
-                    throw new Error(`INVALID_KEY_STEP1: HTTP ${modelsResponse.status} - ${modelsResponse.statusText}`);
-                }
-                throw new Error(`VALIDATION_FAILED_STEP1: HTTP ${modelsResponse.status} - ${modelsResponse.statusText}`);
-            }
-
-            // Step 2: Test actual functionality with a minimal request
-            showStatus('Testing API functionality...', 'info');
-
-            let testRequestResponse;
-            try {
-                testRequestResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: 'gpt-4o-mini',
-                        messages: [
-                            { role: 'user', content: 'Test' }
-                        ],
-                        max_tokens: 5,
-                        temperature: 0
-                    })
-                });
-            } catch (fetchError) {
-                throw new Error(`NETWORK_ERROR_STEP2: ${fetchError.message}`);
-            }
-
-            if (!testRequestResponse.ok) {
-                if (testRequestResponse.status === 401 || testRequestResponse.status === 403) {
-                    throw new Error(`INVALID_KEY_STEP2: HTTP ${testRequestResponse.status} - ${testRequestResponse.statusText}`);
-                } else if (testRequestResponse.status === 429) {
-                    throw new Error('RATE_LIMITED');
-                } else if (testRequestResponse.status === 402 || testRequestResponse.status === 400) {
-                    let errorDetails = '';
-                    try {
-                        const errorData = await testRequestResponse.json();
-                        errorDetails = errorData.error?.message || errorData.error?.code || 'Unknown billing error';
-                        if (errorData.error?.code === 'insufficient_quota' ||
-                            errorData.error?.message?.includes('quota') ||
-                            errorData.error?.message?.includes('billing')) {
-                            throw new Error('BILLING_REQUIRED');
+            if (apiKey) {
+                showStatus('Validating OpenAI API key...', 'info', 'openai');
+                let modelsResponse;
+                try {
+                    modelsResponse = await fetch('https://api.openai.com/v1/models', {
+                        headers: {
+                            'Authorization': `Bearer ${keyToUse}`
                         }
-                    } catch (e) {
-                        // If we can't parse the error, still assume billing issue
-                    }
-                    throw new Error('BILLING_REQUIRED');
+                    });
+                } catch (fetchError) {
+                    throw new Error(`NETWORK_ERROR_STEP1: ${fetchError.message}`);
                 }
-                throw new Error(`FUNCTIONAL_TEST_FAILED: HTTP ${testRequestResponse.status} - ${testRequestResponse.statusText}`);
+                if (!modelsResponse.ok) {
+                    if (modelsResponse.status === 401 || modelsResponse.status === 403) {
+                        throw new Error(`INVALID_KEY_STEP1: HTTP ${modelsResponse.status} - ${modelsResponse.statusText}`);
+                    }
+                    throw new Error(`VALIDATION_FAILED_STEP1: HTTP ${modelsResponse.status} - ${modelsResponse.statusText}`);
+                }
+                showStatus('Testing OpenAI API functionality...', 'info', 'openai');
+                let testRequestResponse;
+                try {
+                    testRequestResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${keyToUse}`
+                        },
+                        body: JSON.stringify({
+                            model: 'gpt-4o-mini',
+                            messages: [
+                                { role: 'user', content: 'Test' }
+                            ],
+                            max_tokens: 5,
+                            temperature: 0
+                        })
+                    });
+                } catch (fetchError) {
+                    throw new Error(`NETWORK_ERROR_STEP2: ${fetchError.message}`);
+                }
+                if (!testRequestResponse.ok) {
+                    if (testRequestResponse.status === 401 || testRequestResponse.status === 403) {
+                        throw new Error(`INVALID_KEY_STEP2: HTTP ${testRequestResponse.status} - ${testRequestResponse.statusText}`);
+                    } else if (testRequestResponse.status === 429) {
+                        throw new Error('RATE_LIMITED');
+                    } else if (testRequestResponse.status === 402 || testRequestResponse.status === 400) {
+                        let errorDetails = '';
+                        try {
+                            const errorData = await testRequestResponse.json();
+                            errorDetails = errorData.error?.message || errorData.error?.code || 'Unknown billing error';
+                            if (errorData.error?.code === 'insufficient_quota' ||
+                                errorData.error?.message?.includes('quota') ||
+                                errorData.error?.message?.includes('billing')) {
+                                throw new Error('BILLING_REQUIRED');
+                            }
+                        } catch (e) { }
+                        throw new Error('BILLING_REQUIRED');
+                    }
+                    throw new Error(`FUNCTIONAL_TEST_FAILED: HTTP ${testRequestResponse.status} - ${testRequestResponse.statusText}`);
+                }
+                showDetailedStatus('OpenAI API Test Passed', 'Your OpenAI API key successfully completed both validation steps and is working properly!', 'success', 'openai');
             }
-
-            // If we get here, the functional test passed
-            showDetailedStatus('Functional Test Passed', 'Your API key successfully completed both validation steps and is working properly!', 'info');
-
-            // Save all settings
             await chrome.storage.sync.set({
-                openaiApiKey: apiKey,
-                englishVariant: englishVariant,
-                googleTranslateApiKey: googleTranslateApiKey,
-                targetLanguage: targetLanguage
+                openaiApiKey: keyToUse,
+                englishVariant: englishVariant
             });
-
-            showDetailedStatus('Settings Saved Successfully', 'Your API keys and language settings have been saved.', 'success');
-
-            // Notify all tabs to refresh rewrite buttons immediately
+            showDetailedStatus('OpenAI Settings Saved', 'Your OpenAI API key and English variant have been saved successfully.', 'success', 'openai');
+            document.getElementById('openaiKeyStatus').textContent = '✔️ Saved';
+            document.getElementById('openaiKeyStatus').style.color = '#38a169';
             chrome.tabs && chrome.tabs.query && chrome.tabs.sendMessage && chrome.tabs.query({}, function (tabs) {
                 for (let tab of tabs) {
                     chrome.tabs.sendMessage(tab.id, { action: "refreshRewriteButtons" });
                 }
             });
-
         } catch (error) {
-            // Handle specific error types with detailed information
             const errorMsg = error.message || 'Unknown error';
-
             if (errorMsg === 'BILLING_REQUIRED') {
-                showBillingRequiredMessage();
+                showBillingRequiredMessage('openai');
             } else if (errorMsg === 'RATE_LIMITED') {
-                showDetailedStatus('Rate Limited', 'Your API key works but you\'re making requests too quickly. Please wait a moment and try again. Or you don\'t have enough credits to process requests. You can upgrade to a paid plan to avoid rate limiting. ', 'warning');
+                showDetailedStatus('Rate Limited', 'Your API key works but you\'re making requests too quickly. Please wait a moment and try again. Or you don\'t have enough credits to process requests. You can upgrade to a paid plan to avoid rate limiting. ', 'warning', 'openai');
             } else if (errorMsg.startsWith('NETWORK_ERROR_STEP1')) {
-                showDetailedStatus('Network Error (Step 1)', `Failed to connect to OpenAI for initial validation. ${errorMsg.split(': ')[1] || 'Check your internet connection.'}`, 'error');
+                showDetailedStatus('Network Error (Step 1)', `Failed to connect to OpenAI for initial validation. ${errorMsg.split(': ')[1] || 'Check your internet connection.'}`, 'error', 'openai');
             } else if (errorMsg.startsWith('NETWORK_ERROR_STEP2')) {
-                showDetailedStatus('Network Error (Step 2)', `Failed to connect to OpenAI for functional testing. ${errorMsg.split(': ')[1] || 'Check your internet connection.'}`, 'error');
+                showDetailedStatus('Network Error (Step 2)', `Failed to connect to OpenAI for functional testing. ${errorMsg.split(': ')[1] || 'Check your internet connection.'}`, 'error', 'openai');
             } else if (errorMsg.startsWith('INVALID_KEY_STEP1')) {
-                showDetailedStatus('Authentication Failed (Step 1)', `Your API key was rejected during initial validation. Details: ${errorMsg.split(': ')[1] || 'Invalid credentials.'}`, 'error');
+                showDetailedStatus('Authentication Failed (Step 1)', `Your API key was rejected during initial validation. Details: ${errorMsg.split(': ')[1] || 'Invalid credentials.'}`, 'error', 'openai');
             } else if (errorMsg.startsWith('INVALID_KEY_STEP2')) {
-                showDetailedStatus('Authentication Failed (Step 2)', `Your API key was rejected during functional testing. Details: ${errorMsg.split(': ')[1] || 'Invalid credentials.'}`, 'error');
+                showDetailedStatus('Authentication Failed (Step 2)', `Your API key was rejected during functional testing. Details: ${errorMsg.split(': ')[1] || 'Invalid credentials.'}`, 'error', 'openai');
             } else if (errorMsg.startsWith('VALIDATION_FAILED_STEP1')) {
-                showDetailedStatus('Validation Failed (Step 1)', `OpenAI endpoint returned an error during initial validation. Details: ${errorMsg.split(': ')[1] || 'Server error.'}`, 'error');
+                showDetailedStatus('Validation Failed (Step 1)', `OpenAI endpoint returned an error during initial validation. Details: ${errorMsg.split(': ')[1] || 'Server error.'}`, 'error', 'openai');
             } else if (errorMsg.startsWith('FUNCTIONAL_TEST_FAILED')) {
-                showDetailedStatus('Functional Test Failed', `OpenAI rejected the test request. Details: ${errorMsg.split(': ')[1] || 'Server error.'} This usually indicates a billing or quota issue.`, 'error');
+                showDetailedStatus('Functional Test Failed', `OpenAI rejected the test request. Details: ${errorMsg.split(': ')[1] || 'Server error.'} This usually indicates a billing or quota issue.`, 'error', 'openai');
             } else if (errorMsg.includes('Invalid API key')) {
-                showDetailedStatus('Invalid API Key Format', 'Please ensure your API key starts with "sk-" and is copied correctly from your OpenAI dashboard.', 'error');
+                showDetailedStatus('Invalid API Key Format', 'Please ensure your API key starts with "sk-" and is copied correctly from your OpenAI dashboard.', 'error', 'openai');
             } else {
-                showDetailedStatus('Unexpected Error', `An unexpected error occurred: ${errorMsg}. Please try again or contact support if the issue persists.`, 'error');
+                showDetailedStatus('Unexpected Error', `An unexpected error occurred: ${errorMsg}. Please try again or contact support if the issue persists.`, 'error', 'openai');
             }
         } finally {
-            // Restore button state
-            saveButton.textContent = 'Save Settings';
-            saveButton.disabled = false;
+            saveOpenAIBtn.textContent = '💾 Save OpenAI Settings';
+            saveOpenAIBtn.disabled = false;
         }
     }
 
-    function showDetailedStatus(title, message, type) {
+    async function saveGoogleTranslateSettings() {
+        const googleTranslateApiKey = googleTranslateApiKeyInput.value.trim();
+        const targetLanguage = selectedLanguage;
+        let keyToUse = googleTranslateApiKey;
+        if (!googleTranslateApiKey) {
+            const result = await chrome.storage.sync.get(['googleTranslateApiKey']);
+            if (result.googleTranslateApiKey) {
+                keyToUse = result.googleTranslateApiKey;
+            } else {
+                showStatus('Please enter your Google Translate API key', 'error', 'google');
+                return;
+            }
+        }
+        if (!targetLanguage) {
+            showStatus('Please select a target language', 'error', 'google');
+            return;
+        }
+        saveGoogleBtn.textContent = 'Saving...';
+        saveGoogleBtn.disabled = true;
+        try {
+            if (googleTranslateApiKey) {
+                showStatus('Testing Google Translate API key...', 'info', 'google');
+                let testResponse;
+                try {
+                    testResponse = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(keyToUse)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            q: 'Hello world',
+                            target: 'es'
+                        })
+                    });
+                } catch (fetchError) {
+                    throw new Error(`NETWORK_ERROR: ${fetchError.message}`);
+                }
+                if (!testResponse.ok) {
+                    if (testResponse.status === 400) {
+                        const errorData = await testResponse.json();
+                        if (errorData.error?.message?.includes('API key')) {
+                            throw new Error('INVALID_API_KEY');
+                        } else if (errorData.error?.message?.includes('quota') || errorData.error?.message?.includes('billing')) {
+                            throw new Error('QUOTA_EXCEEDED');
+                        } else {
+                            throw new Error(`API_ERROR: ${errorData.error?.message || 'Unknown API error'}`);
+                        }
+                    } else if (testResponse.status === 403) {
+                        throw new Error('INVALID_API_KEY');
+                    } else {
+                        throw new Error(`HTTP_ERROR: ${testResponse.status} - ${testResponse.statusText}`);
+                    }
+                }
+                const testData = await testResponse.json();
+                if (testData && testData.data && testData.data.translations && testData.data.translations[0]) {
+                    const translatedText = testData.data.translations[0].translatedText;
+                    showDetailedStatus('Google Translate API Test Passed', `Your Google Translate API key is working correctly! Test translation: "Hello world" → "${translatedText}"`, 'success', 'google');
+                } else {
+                    throw new Error('INVALID_RESPONSE');
+                }
+            }
+            await chrome.storage.sync.set({
+                googleTranslateApiKey: keyToUse,
+                targetLanguage: targetLanguage
+            });
+            showDetailedStatus('Google Translate Settings Saved', 'Your Google Translate API key and target language have been saved successfully.', 'success', 'google');
+            document.getElementById('googleKeyStatus').textContent = '✔️ Saved';
+            document.getElementById('googleKeyStatus').style.color = '#38a169';
+        } catch (error) {
+            const errorMsg = error.message || 'Unknown error';
+            if (errorMsg === 'INVALID_API_KEY') {
+                showDetailedStatus('Invalid Google Translate API Key', 'The API key you provided is invalid or not authorized for Google Translate API. Please check your key and ensure it has the necessary permissions.', 'error', 'google');
+            } else if (errorMsg === 'QUOTA_EXCEEDED') {
+                showDetailedStatus('Quota Exceeded', 'Your Google Translate API quota has been exceeded. Please check your Google Cloud Console billing and quota settings.', 'warning', 'google');
+            } else if (errorMsg.startsWith('NETWORK_ERROR')) {
+                showDetailedStatus('Network Error', `Failed to connect to Google Translate API. ${errorMsg.split(': ')[1] || 'Check your internet connection.'}`, 'error', 'google');
+            } else if (errorMsg.startsWith('API_ERROR')) {
+                showDetailedStatus('API Error', `Google Translate API returned an error: ${errorMsg.split(': ')[1] || 'Unknown API error'}`, 'error', 'google');
+            } else if (errorMsg.startsWith('HTTP_ERROR')) {
+                showDetailedStatus('HTTP Error', `Google Translate API returned HTTP error: ${errorMsg.split(': ')[1] || 'Unknown HTTP error'}`, 'error', 'google');
+            } else if (errorMsg === 'INVALID_RESPONSE') {
+                showDetailedStatus('Invalid Response', 'Google Translate API returned an unexpected response format. Please try again.', 'error', 'google');
+            } else {
+                showDetailedStatus('Unexpected Error', `An unexpected error occurred: ${errorMsg}. Please try again or contact support if the issue persists.`, 'error', 'google');
+            }
+        } finally {
+            saveGoogleBtn.textContent = '💾 Save Google Translate Settings';
+            saveGoogleBtn.disabled = false;
+        }
+    }
+
+    function showDetailedStatus(title, message, type, which) {
+        const div = which === 'google' ? googleStatusDiv : openaiStatusDiv;
         const typeEmojis = {
             'error': '✖',
             'warning': '⚠',
             'success': '✔',
             'info': 'ℹ'
         };
-
         const typeColors = {
             'error': '#ffffff',
             'warning': '#ffffff',
             'success': '#00ff00',
             'info': '#ffffff'
         };
-
-        // Add helpful link to all warning messages
         let extraLink = '';
         if (type === 'warning') {
-            extraLink = `<div style="margin-top: 6px;"><a href='https://platform.openai.com/settings/organization/billing/overview' target='_blank' style='color:rgb(255, 255, 255); text-decoration: underline; font-size: 12px;'>Go to OpenAI Billing & Help</a></div>`;
+            if (title.includes('OpenAI') || message.includes('OpenAI')) {
+                extraLink = `<div style="margin-top: 6px;"><a href='https://platform.openai.com/settings/organization/billing/overview' target='_blank' style='color:rgb(255, 255, 255); text-decoration: underline; font-size: 12px;'>Go to OpenAI Billing & Help</a></div>`;
+            } else if (title.includes('Google') || message.includes('Google')) {
+                extraLink = `<div style="margin-top: 6px;"><a href='https://console.cloud.google.com/billing' target='_blank' style='color:rgb(255, 255, 255); text-decoration: underline; font-size: 12px;'>Go to Google Cloud Billing</a></div>`;
+            }
         }
-
-        statusDiv.innerHTML = `
+        div.innerHTML = `
             <div style="text-align: left; line-height: 1.4;">
                 <div style="font-weight: 600; color: ${typeColors[type]}; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
                     <span>${typeEmojis[type]}</span>
@@ -362,14 +452,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             </div>
         `;
-        statusDiv.className = `status ${type}`;
-        statusDiv.style.display = 'block';
-        // No auto-hide for any message type
+        div.className = `status ${type}`;
+        div.style.display = 'block';
     }
 
-    function showBillingRequiredMessage() {
-        // Create a detailed billing guidance message (persistent, does not auto-hide)
-        statusDiv.innerHTML = `
+    function showBillingRequiredMessage(which) {
+        const div = which === 'google' ? googleStatusDiv : openaiStatusDiv;
+        div.innerHTML = `
             <div style="text-align: left; line-height: 1.4;">
                 <div style="font-weight: 600; color: #d97706; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
                     <span>⚠️</span>
@@ -383,23 +472,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             </div>
         `;
-        statusDiv.className = 'status warning';
-        statusDiv.style.display = 'block';
-        // Do NOT auto-hide this message. It will refresh/disappear on next Save Settings attempt.
+        div.className = 'status warning';
+        div.style.display = 'block';
     }
 
-    function showStatus(message, type) {
-        statusDiv.textContent = message;
-        statusDiv.className = `status ${type}`;
-        statusDiv.style.display = 'block';
-        // No auto-hide for any message type
+    function showStatus(message, type, which) {
+        const div = which === 'google' ? googleStatusDiv : openaiStatusDiv;
+        div.textContent = message;
+        div.className = `status ${type}`;
+        div.style.display = 'block';
     }
-
-    // Handle API key input formatting
-    apiKeyInput.addEventListener('input', (e) => {
-        // Hide status when user starts typing
-        statusDiv.style.display = 'none';
-    });
 
     // Page navigation functionality
     const helpToggle = document.getElementById('helpToggle');

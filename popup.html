@@ -145,9 +145,9 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 16px 24px;
-            border-radius: 12px;
-            font-size: 15px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             width: 100%;
@@ -186,6 +186,48 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+        }
+
+        /* Button group styles for multiple save buttons */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .button-group .button {
+            margin-bottom: 0;
+        }
+
+        /* Section styling */
+        .settings-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e7ff;
+        }
+
+        .settings-section.google {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 1px solid #dcfce7;
+        }
+
+        .settings-section h3 {
+            margin: 0 0 16px 0;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-section.openai h3 {
+            color: #3730a3;
+        }
+
+        .settings-section.google h3 {
+            color: #166534;
         }
 
         .status {
@@ -420,69 +462,93 @@
 
         <!-- Main Page -->
         <div id="mainPage" class="page visible">
-            <form id="settingsForm">
-                <div class="form-group">
-                    <label for="apiKey">🔑 OpenAI API Key</label>
-                    <div class="input-wrapper">
-                        <input type="text" id="apiKey" placeholder="sk-..." required>
-                    </div>
-                    <div class="help-text">
-                        Your API key is stored locally and never shared.
-                        <a href="https://platform.openai.com/api-keys" target="_blank" class="link">Get your API key
-                            here</a>
-                    </div>
-                </div>
+            <div id="settingsForm">
+                <!-- OpenAI Settings Section -->
+                <div class="settings-section openai">
+                    <h3>
+                        <span style="font-size: 18px;">🤖</span>
+                        OpenAI Settings
+                    </h3>
 
-                <div class="form-group">
-                    <label for="englishVariant">🌍 English Variant</label>
-                    <div class="input-wrapper">
-                        <select id="englishVariant" required>
-                            <option value="US">🇺🇸 United States (American English)</option>
-                            <option value="UK">🇬🇧 United Kingdom (British English)</option>
-                            <option value="AU">🇦🇺 Australia (Australian English)</option>
-                            <option value="CA">🇨🇦 Canada (Canadian English)</option>
-                            <option value="NZ">🇳🇿 New Zealand (New Zealand English)</option>
-                            <option value="ZA">🇿🇦 South Africa (South African English)</option>
-                        </select>
-                    </div>
-                    <div class="help-text">
-                        Choose which English variant you want your emails to sound like.
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="googleTranslateApiKey">🔑 Google Translate API Key</label>
-                    <div class="input-wrapper">
-                        <input type="text" id="googleTranslateApiKey" placeholder="Your Google Translate API key..."
-                            required>
-                    </div>
-                    <div class="help-text">
-                        Your Google Translate API key is stored locally and never shared.
-                        <a href="https://cloud.google.com/translate/docs/setup" target="_blank" class="link">Get your
-                            API key here</a>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="languageSearch">🌐 Target Language</label>
-                    <div class="input-wrapper" style="position:relative;">
-                        <input type="text" id="languageSearch" placeholder="Type nation or language..."
-                            autocomplete="off" required>
-                        <div id="languageDropdown"
-                            style="display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #e2e8f0; border-radius:0 0 12px 12px; max-height:180px; overflow-y:auto; z-index:10;">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="apiKey">🔑 OpenAI API Key <span id="openaiKeyStatus"
+                                style="font-size:14px;margin-left:6px;"></span></label>
+                        <div class="input-wrapper">
+                            <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off">
+                        </div>
+                        <div class="help-text">
+                            Your API key is stored locally and never shared.
+                            <a href="https://platform.openai.com/api-keys" target="_blank" class="link">Get your API key
+                                here</a>
                         </div>
                     </div>
-                    <div class="help-text">
-                        Start typing a language or country, then select from the dropdown.
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="englishVariant">🌍 English Variant</label>
+                        <div class="input-wrapper">
+                            <select id="englishVariant">
+                                <option value="US">🇺🇸 United States (American English)</option>
+                                <option value="UK">🇬🇧 United Kingdom (British English)</option>
+                                <option value="AU">🇦🇺 Australia (Australian English)</option>
+                                <option value="CA">🇨🇦 Canada (Canadian English)</option>
+                                <option value="NZ">🇳🇿 New Zealand (New Zealand English)</option>
+                                <option value="ZA">🇿🇦 South Africa (South African English)</option>
+                            </select>
+                        </div>
+                        <div class="help-text">
+                            Choose which English variant you want your emails to sound like.
+                        </div>
                     </div>
+
+                    <button type="button" class="button" id="saveOpenAIBtn" style="margin-bottom: 0;">
+                        <span>💾 Save OpenAI Settings</span>
+                    </button>
+                    <div id="openaiStatus" class="status" style="display: none;"></div>
                 </div>
 
-                <button type="submit" class="button" id="saveButton">
-                    <span>💾 Save Settings</span>
-                </button>
+                <!-- Google Translate Settings Section -->
+                <div class="settings-section google">
+                    <h3>
+                        <span style="font-size: 18px;">🌐</span>
+                        Google Translate Settings
+                    </h3>
 
-                <div id="status" class="status" style="display: none;"></div>
-            </form>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="googleTranslateApiKey">🔑 Google Translate API Key <span id="googleKeyStatus"
+                                style="font-size:14px;margin-left:6px;"></span></label>
+                        <div class="input-wrapper">
+                            <input type="password" id="googleTranslateApiKey"
+                                placeholder="Your Google Translate API key..." autocomplete="off">
+                        </div>
+                        <div class="help-text">
+                            Your Google Translate API key is stored locally and never shared.
+                            <a href="https://cloud.google.com/translate/docs/setup" target="_blank" class="link">Get
+                                your
+                                API key here</a>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="languageSearch">🌐 Target Language</label>
+                        <div class="input-wrapper" style="position:relative;">
+                            <input type="text" id="languageSearch" placeholder="Type nation or language..."
+                                autocomplete="off">
+                            <div id="languageDropdown"
+                                style="display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #e2e8f0; border-radius:0 0 12px 12px; max-height:180px; overflow-y:auto; z-index:10;">
+                            </div>
+                        </div>
+                        <div class="help-text">
+                            Start typing a language or country, then select from the dropdown.
+                        </div>
+                    </div>
+
+                    <button type="button" class="button" id="saveGoogleBtn"
+                        style="margin-bottom: 0; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                        <span>💾 Save Google Translate Settings</span>
+                    </button>
+                    <div id="googleStatus" class="status" style="display: none;"></div>
+                </div>
+            </div>
 
             <div class="hamburger-menu">
                 <button class="hamburger-btn" id="helpToggle">
@@ -504,49 +570,126 @@
                     style="margin-bottom: 10px; font-size: 1.15em; color: #3730a3; display: flex; align-items: center; gap: 7px; font-weight: 800;">
                     <span style='font-size: 1.1em;'>💡</span> Help & Guide
                 </h2>
-                <ol style="font-size: 13px; color: #374151; line-height: 1.5; padding-left: 16px; margin-bottom: 8px;">
-                    <li style='margin-bottom: 7px;'><b>Get your OpenAI API key:</b><br>
-                        <a href='https://platform.openai.com/api-keys' target='_blank'
-                            style='color: #6366f1; text-decoration: underline; font-weight: 600;'>Go to OpenAI API
-                            Keys</a> and click <span
-                            style='background: #eef2ff; color: #3730a3; border-radius: 4px; padding: 1px 4px; font-size: 0.95em;'>Create
-                            new secret key</span>. Copy the key (starts with <code>sk-</code>).
-                    </li>
-                    <li style='margin-bottom: 7px;'><b>Add credits and set up billing:</b><br>
-                        <a href='https://platform.openai.com/settings/organization/billing/overview' target='_blank'
-                            style='color: #6366f1; text-decoration: underline; font-weight: 600;'>Go to OpenAI
-                            Billing</a>.<br>
-                        <ul style='margin-left: 14px; margin-top: 3px; margin-bottom: 3px; font-size: 12px;'>
-                            <li>Add a payment method (credit card, etc.).</li>
-                            <li>Purchase credits (required even if you finished the free trial).</li>
-                            <li>Check your balance to ensure you have enough credits.</li>
-                        </ul>
-                    </li>
-                    <li style='margin-bottom: 7px;'><b>Enter your API key in the extension:</b><br>
-                        Paste your API key into the field and select your preferred English variant.<br>
-                        Click <span
-                            style='background: #fef9c3; color: #b45309; border-radius: 4px; padding: 1px 4px; font-size: 0.95em;'>Save
-                            Settings</span>.
-                    </li>
-                    <li style='margin-bottom: 7px;'><b>Troubleshooting:</b>
-                        <ul style='margin-left: 14px; margin-top: 3px; font-size: 12px;'>
-                            <li><b>Billing/Credits Warning:</b> Make sure you have added a payment method and purchased
-                                credits.</li>
-                            <li><b>Network Error:</b> Check your internet connection and try again.</li>
-                            <li><b>Authentication Error:</b> Double-check your API key (should start with
-                                <code>sk-</code>).
-                            </li>
-                            <li><b>Still need help?</b> <a href='https://help.openai.com/' target='_blank'
-                                    style='color: #6366f1; text-decoration: underline; font-weight: 600;'>OpenAI Help
-                                    Center</a></li>
-                        </ul>
-                    </li>
-                </ol>
+
+                <div style="margin-bottom: 16px;">
+                    <h3
+                        style="margin: 0 0 8px 0; color: #3730a3; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 16px;">🤖</span>
+                        OpenAI Setup
+                    </h3>
+                    <ol
+                        style="font-size: 13px; color: #374151; line-height: 1.5; padding-left: 16px; margin-bottom: 8px;">
+                        <li style='margin-bottom: 7px;'><b>Get your OpenAI API key:</b><br>
+                            <a href='https://platform.openai.com/api-keys' target='_blank'
+                                style='color: #6366f1; text-decoration: underline; font-weight: 600;'>Go to OpenAI
+                                API
+                                Keys</a> and click <span
+                                style='background: #eef2ff; color: #3730a3; border-radius: 4px; padding: 1px 4px; font-size: 0.95em;'>Create
+                                new secret key</span>. Copy the key (starts with <code>sk-</code>).
+                        </li>
+                        <li style='margin-bottom: 7px;'><b>Add credits and set up billing:</b><br>
+                            <a href='https://platform.openai.com/settings/organization/billing/overview' target='_blank'
+                                style='color: #6366f1; text-decoration: underline; font-weight: 600;'>Go to OpenAI
+                                Billing</a>.<br>
+                            <ul style='margin-left: 14px; margin-top: 3px; margin-bottom: 3px; font-size: 12px;'>
+                                <li>Add a payment method (credit card, etc.).</li>
+                                <li>Purchase credits (required even if you finished the free trial).</li>
+                                <li>Check your balance to ensure you have enough credits.</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <h3
+                        style="margin: 0 0 8px 0; color: #166534; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 16px;">🌐</span>
+                        Google Translate Setup
+                    </h3>
+                    <ol
+                        style="font-size: 13px; color: #374151; line-height: 1.5; padding-left: 16px; margin-bottom: 8px;">
+                        <li style='margin-bottom: 7px;'><b>Create a Google Cloud Project:</b><br>
+                            <a href='https://console.cloud.google.com/' target='_blank'
+                                style='color: #10b981; text-decoration: underline; font-weight: 600;'>Go to Google
+                                Cloud
+                                Console</a> and create a new project or select an existing one.
+                        </li>
+                        <li style='margin-bottom: 7px;'><b>Enable Google Translate API:</b><br>
+                            <a href='https://console.cloud.google.com/apis/library/translate.googleapis.com'
+                                target='_blank'
+                                style='color: #10b981; text-decoration: underline; font-weight: 600;'>Enable Google
+                                Translate API</a> for your project.
+                        </li>
+                        <li style='margin-bottom: 7px;'><b>Create API Key:</b><br>
+                            <a href='https://console.cloud.google.com/apis/credentials' target='_blank'
+                                style='color: #10b981; text-decoration: underline; font-weight: 600;'>Go to
+                                Credentials</a> and click <span
+                                style='background: #f0fdf4; color: #166534; border-radius: 4px; padding: 1px 4px; font-size: 0.95em;'>Create
+                                Credentials</span> → <span
+                                style='background: #f0fdf4; color: #166534; border-radius: 4px; padding: 1px 4px; font-size: 0.95em;'>API
+                                Key</span>.
+                        </li>
+                        <li style='margin-bottom: 7px;'><b>Set up billing (required):</b><br>
+                            <a href='https://console.cloud.google.com/billing' target='_blank'
+                                style='color: #10b981; text-decoration: underline; font-weight: 600;'>Set up
+                                billing</a>
+                            for your project. Google Translate API requires billing to be enabled.
+                        </li>
+                    </ol>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <h3
+                        style="margin: 0 0 8px 0; color: #7c3aed; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 16px;">⚙️</span>
+                        Extension Usage
+                    </h3>
+                    <ol
+                        style="font-size: 13px; color: #374151; line-height: 1.5; padding-left: 16px; margin-bottom: 8px;">
+                        <li style='margin-bottom: 7px;'><b>Save settings individually:</b><br>
+                            Use the individual save buttons for each service to save your settings separately.
+                        </li>
+                        <li style='margin-bottom: 7px;'><b>API key testing:</b><br>
+                            The extension automatically tests your API keys with mock data to ensure they work
+                            correctly
+                            before saving.
+                        </li>
+                    </ol>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <h3
+                        style="margin: 0 0 8px 0; color: #dc2626; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 16px;">🔧</span>
+                        Troubleshooting
+                    </h3>
+                    <ul style='margin-left: 14px; margin-top: 3px; font-size: 12px; color: #374151;'>
+                        <li><b>OpenAI Billing/Credits Warning:</b> Make sure you have added a payment method and
+                            purchased credits.</li>
+                        <li><b>Google Translate Quota:</b> Check your Google Cloud Console billing and quota
+                            settings.
+                        </li>
+                        <li><b>Network Error:</b> Check your internet connection and try again.</li>
+                        <li><b>Authentication Error:</b> Double-check your API keys and ensure they have the correct
+                            permissions.</li>
+                        <li><b>Still need help?</b>
+                            <a href='https://help.openai.com/' target='_blank'
+                                style='color: #6366f1; text-decoration: underline; font-weight: 600;'>OpenAI
+                                Help</a> |
+                            <a href='https://cloud.google.com/translate/docs/support' target='_blank'
+                                style='color: #10b981; text-decoration: underline; font-weight: 600;'>Google
+                                Translate
+                                Help</a>
+                        </li>
+                    </ul>
+                </div>
+
                 <div
                     style='margin-top: 10px; background: #f1f5f9; border-radius: 6px; padding: 7px 10px; color: #334155; font-size: 12px; display: flex; align-items: center; gap: 7px;'>
                     <span style='font-size: 1em;'>✨</span>
                     <span><b>Tip:</b> Access this guide anytime via <span
-                            style='background: #e0e7ff; color: #3730a3; border-radius: 4px; padding: 1px 4px;'>Help &
+                            style='background: #e0e7ff; color: #3730a3; border-radius: 4px; padding: 1px 4px;'>Help
+                            &
                             Guide</span> at the bottom.</span>
                 </div>
                 <button id='returnButton'

@@ -3,6 +3,10 @@
 
 <head>
     <meta charset="utf-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        crossorigin="anonymous">
     <link rel="stylesheet" href="styles.css">
     <style>
         * {
@@ -466,12 +470,13 @@
                 <!-- OpenAI Settings Section -->
                 <div class="settings-section openai">
                     <h3>
-                        <span style="font-size: 18px;">🤖</span>
+                        <i class="fa-solid fa-robot" style="color:#6366f1;font-size:18px;margin-right:6px;"></i>
                         OpenAI Settings
                     </h3>
 
                     <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="apiKey">🔑 OpenAI API Key <span id="openaiKeyStatus"
+                        <label for="apiKey"><i class="fa-solid fa-key" style="color:#f59e42;margin-right:5px;"></i>
+                            OpenAI API Key <span id="openaiKeyStatus"
                                 style="font-size:14px;margin-left:6px;"></span></label>
                         <div class="input-wrapper">
                             <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off">
@@ -484,7 +489,8 @@
                     </div>
 
                     <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="englishVariant">🌍 English Variant</label>
+                        <label for="englishVariant"><i class="fa-solid fa-earth-europe"
+                                style="color:#38bdf8;margin-right:5px;"></i> English Variant</label>
                         <div class="input-wrapper">
                             <select id="englishVariant">
                                 <option value="US">🇺🇸 United States (American English)</option>
@@ -501,7 +507,8 @@
                     </div>
 
                     <button type="button" class="button" id="saveOpenAIBtn" style="margin-bottom: 0;">
-                        <span>💾 Save OpenAI Settings</span>
+                        <i class="fa-solid fa-floppy-disk" style="color:#fff;"></i> Save OpenAI
+                        Settings
                     </button>
                     <div id="openaiStatus" class="status" style="display: none;"></div>
                 </div>
@@ -509,13 +516,14 @@
                 <!-- Google Translate Settings Section -->
                 <div class="settings-section google">
                     <h3>
-                        <span style="font-size: 18px;">🌐</span>
+                        <i class="fa-solid fa-globe" style="color:#14b8a6;font-size:18px;margin-right:6px;"></i>
                         Google Translate Settings
                     </h3>
 
                     <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="googleTranslateApiKey">🔑 Google Translate API Key <span id="googleKeyStatus"
-                                style="font-size:14px;margin-left:6px;"></span></label>
+                        <label for="googleTranslateApiKey"><i class="fa-solid fa-key"
+                                style="color:#f59e42;margin-right:5px;"></i> Google Translate API Key <span
+                                id="googleKeyStatus" style="font-size:14px;margin-left:6px;"></span></label>
                         <div class="input-wrapper">
                             <input type="password" id="googleTranslateApiKey"
                                 placeholder="Your Google Translate API key..." autocomplete="off">
@@ -529,7 +537,8 @@
                     </div>
 
                     <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="languageSearch">🌐 Target Language</label>
+                        <label for="languageSearch"><i class="fa-solid fa-globe"
+                                style="color:#14b8a6;margin-right:5px;"></i> Target Language</label>
                         <div class="input-wrapper" style="position:relative;">
                             <input type="text" id="languageSearch" placeholder="Type nation or language..."
                                 autocomplete="off">
@@ -544,7 +553,8 @@
 
                     <button type="button" class="button" id="saveGoogleBtn"
                         style="margin-bottom: 0; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                        <span>💾 Save Google Translate Settings</span>
+                        <i class="fa-solid fa-floppy-disk" style="color:#fff;"></i> Save Google
+                        Translate Settings
                     </button>
                     <div id="googleStatus" class="status" style="display: none;"></div>
                 </div>
@@ -568,13 +578,15 @@
                 style="max-width: 440px; margin: 0 auto; background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%); border-radius: 14px; box-shadow: 0 2px 12px rgba(60,72,120,0.08); padding: 16px 12px 12px 12px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
                 <h2
                     style="margin-bottom: 10px; font-size: 1.15em; color: #3730a3; display: flex; align-items: center; gap: 7px; font-weight: 800;">
-                    <span style='font-size: 1.1em;'>💡</span> Help & Guide
+                    <i class="fa-solid fa-lightbulb" style="color:#facc15;font-size:1.1em;"></i> Help & Guide
+                    <span style="position:absolute;top:16px;right:16px;opacity:0.7;"><i class="fa-solid fa-lightbulb"
+                            style="color:#facc15;font-size:20px;"></i></span>
                 </h2>
 
                 <div style="margin-bottom: 16px;">
                     <h3
                         style="margin: 0 0 8px 0; color: #3730a3; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 16px;">🤖</span>
+                        <i class="fa-solid fa-robot" style="color:#6366f1;font-size:16px;"></i>
                         OpenAI Setup
                     </h3>
                     <ol
@@ -603,7 +615,7 @@
                 <div style="margin-bottom: 16px;">
                     <h3
                         style="margin: 0 0 8px 0; color: #166534; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 16px;">🌐</span>
+                        <i class="fa-solid fa-globe" style="color:#14b8a6;font-size:16px;"></i>
                         Google Translate Setup
                     </h3>
                     <ol
@@ -641,7 +653,7 @@
                 <div style="margin-bottom: 16px;">
                     <h3
                         style="margin: 0 0 8px 0; color: #7c3aed; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 16px;">⚙️</span>
+                        <i class="fa-solid fa-gear" style="color:#7c3aed;font-size:16px;"></i>
                         Extension Usage
                     </h3>
                     <ol
@@ -660,7 +672,7 @@
                 <div style="margin-bottom: 16px;">
                     <h3
                         style="margin: 0 0 8px 0; color: #dc2626; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 16px;">🔧</span>
+                        <i class="fa-solid fa-screwdriver-wrench" style="color:#dc2626;font-size:16px;"></i>
                         Troubleshooting
                     </h3>
                     <ul style='margin-left: 14px; margin-top: 3px; font-size: 12px; color: #374151;'>
@@ -686,7 +698,7 @@
 
                 <div
                     style='margin-top: 10px; background: #f1f5f9; border-radius: 6px; padding: 7px 10px; color: #334155; font-size: 12px; display: flex; align-items: center; gap: 7px;'>
-                    <span style='font-size: 1em;'>✨</span>
+                    <i class="fa-solid fa-sparkles" style="color:#facc15;font-size:1em;"></i>
                     <span><b>Tip:</b> Access this guide anytime via <span
                             style='background: #e0e7ff; color: #3730a3; border-radius: 4px; padding: 1px 4px;'>Help
                             &

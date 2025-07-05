@@ -159,20 +159,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Show status for OpenAI key
             const openaiKeyStatus = document.getElementById('openaiKeyStatus');
             if (result.openaiApiKey) {
-                openaiKeyStatus.textContent = '✔️ Saved';
-                openaiKeyStatus.style.color = '#38a169';
+                openaiKeyStatus.innerHTML = '<i class="fa-solid fa-check-circle" style="color:#22c55e;"></i> Saved';
+                openaiKeyStatus.style.color = '#22c55e';
             } else {
-                openaiKeyStatus.textContent = '❌ Not set';
-                openaiKeyStatus.style.color = '#e53e3e';
+                openaiKeyStatus.innerHTML = '<i class="fa-solid fa-times-circle" style="color:#ef4444;"></i> Not set';
+                openaiKeyStatus.style.color = '#ef4444';
             }
             // Show status for Google key
             const googleKeyStatus = document.getElementById('googleKeyStatus');
             if (result.googleTranslateApiKey) {
-                googleKeyStatus.textContent = '✔️ Saved';
-                googleKeyStatus.style.color = '#38a169';
+                googleKeyStatus.innerHTML = '<i class="fa-solid fa-check-circle" style="color:#22c55e;"></i> Saved';
+                googleKeyStatus.style.color = '#22c55e';
             } else {
-                googleKeyStatus.textContent = '❌ Not set';
-                googleKeyStatus.style.color = '#e53e3e';
+                googleKeyStatus.innerHTML = '<i class="fa-solid fa-times-circle" style="color:#ef4444;"></i> Not set';
+                googleKeyStatus.style.color = '#ef4444';
             }
             if (result.englishVariant) {
                 englishVariantSelect.value = result.englishVariant;
@@ -290,8 +290,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 englishVariant: englishVariant
             });
             showDetailedStatus('OpenAI Settings Saved', 'Your OpenAI API key and English variant have been saved successfully.', 'success', 'openai');
-            document.getElementById('openaiKeyStatus').textContent = '✔️ Saved';
-            document.getElementById('openaiKeyStatus').style.color = '#38a169';
+            document.getElementById('openaiKeyStatus').innerHTML = '<i class="fa-solid fa-check-circle" style="color:#22c55e;"></i> Saved';
+            document.getElementById('openaiKeyStatus').style.color = '#22c55e';
             chrome.tabs && chrome.tabs.query && chrome.tabs.sendMessage && chrome.tabs.query({}, function (tabs) {
                 for (let tab of tabs) {
                     chrome.tabs.sendMessage(tab.id, { action: "refreshRewriteButtons" });
@@ -390,8 +390,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 targetLanguage: targetLanguage
             });
             showDetailedStatus('Google Translate Settings Saved', 'Your Google Translate API key and target language have been saved successfully.', 'success', 'google');
-            document.getElementById('googleKeyStatus').textContent = '✔️ Saved';
-            document.getElementById('googleKeyStatus').style.color = '#38a169';
+            document.getElementById('googleKeyStatus').innerHTML = '<i class="fa-solid fa-check-circle" style="color:#22c55e;"></i> Saved';
+            document.getElementById('googleKeyStatus').style.color = '#22c55e';
         } catch (error) {
             const errorMsg = error.message || 'Unknown error';
             if (errorMsg === 'INVALID_API_KEY') {
@@ -417,11 +417,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function showDetailedStatus(title, message, type, which) {
         const div = which === 'google' ? googleStatusDiv : openaiStatusDiv;
-        const typeEmojis = {
-            'error': '✖',
-            'warning': '⚠',
-            'success': '✔',
-            'info': 'ℹ'
+        const typeIcons = {
+            'error': '<i class="fa-solid fa-times-circle" style="color:#fff;"></i>',
+            'warning': '<i class="fa-solid fa-exclamation-triangle" style="color:#fff;"></i>',
+            'success': '<i class="fa-solid fa-check-circle" style="color:#00ff00;"></i>',
+            'info': '<i class="fa-solid fa-info-circle" style="color:#fff;"></i>'
         };
         const typeColors = {
             'error': '#ffffff',
@@ -440,7 +440,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         div.innerHTML = `
             <div style="text-align: left; line-height: 1.4;">
                 <div style="font-weight: 600; color: ${typeColors[type]}; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                    <span>${typeEmojis[type]}</span>
+                    ${typeIcons[type]}
                     <span>${title}</span>
                 </div>
                 <div style="font-size: 13px; color: #4a5568; margin-bottom: 8px;">

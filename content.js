@@ -1,6 +1,7 @@
 // Gmail Integration Content Script - Optimized
 class GmailRewriter {
   constructor() {
+    this.injectFontAwesome();
     this.apiKey = null;
     this.englishVariant = 'US';
     this.requestQueue = [];
@@ -22,6 +23,17 @@ class GmailRewriter {
 
     this.init();
     this.setupStorageListener();
+  }
+
+  injectFontAwesome() {
+    if (!document.getElementById('native-english-fontawesome')) {
+      const link = document.createElement('link');
+      link.id = 'native-english-fontawesome';
+      link.rel = 'stylesheet';
+      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css';
+      link.crossOrigin = 'anonymous';
+      document.head.appendChild(link);
+    }
   }
 
   async init() {
@@ -661,7 +673,7 @@ class GmailRewriter {
 
     const rewriteBtn = document.createElement('div');
     rewriteBtn.className = 'native-english-rewrite-btn';
-    rewriteBtn.innerHTML = `<button class="rewrite-button" title="Rewrite for ${this.englishVariant}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.01-4.65.51-6.84L9.37 4.5C8.16 3.42 6.49 3.42 5.28 4.5l-1.5 1.31C2.57 6.87 2.3 7.96 2.66 9c.36 1.04 1.2 1.88 2.24 2.24 1.04.36 2.13.09 3.19-.57l.03.03L5.58 13.8c-.35.35-.35.92 0 1.27.35.35.92.35 1.27 0l2.54-2.54.03.03c1.66 1.66 4.38 1.66 6.04 0l1.41-1.41c.39-.39.39-1.02 0-1.41-.39-.39-1.02-.39-1.41 0l-1.41 1.41c-.78.78-2.05.78-2.83 0-.78-.78-.78-2.05 0-2.83l1.41-1.41c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41l-1.41 1.41z"/></svg>${this.englishVariant}</button>`;
+    rewriteBtn.innerHTML = `<button class="rewrite-button" title="Rewrite for ${this.englishVariant}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.01-4.65.51-6.84L9.37 4.5C8.16 3.42 6.49 3.42 5.28 4.5l-1.5 1.31C2.57 6.87 2.3 7.96 2.66 9c.36 1.04 1.2 1.88 2.24 2.24 1.04.36 2.13.09 3.19-.57l.03.03L5.58 13.8c-.35.35-.35.92 0 1.27.35.35.92.35 1.27 0l2.54-2.54.03.03c1.66 1.66 4.38 1.66 6.04 0l1.41-1.41c.39-.39.39-1.02 0-1.41-.39-.39-1.02-.39-1.41 0l-1.41 1.41z"/></svg>${this.englishVariant}</button>`;
 
     rewriteBtn.querySelector('.rewrite-button').addEventListener('click', () => this.handleRewrite(composeWindow));
     // Try to find the .aDh container (Gmail action bar area)
@@ -955,44 +967,45 @@ class GmailRewriter {
 
     dialog.innerHTML = `
       <div class="gorgeous-dialog-header">
-        <h2 class="gorgeous-dialog-title">✨ Preview Email (${variantName})</h2>
+        <h2 class="gorgeous-dialog-title"><i class="fa-solid fa-magic-wand-sparkles" style="color:rgb(185, 224, 43);margin-right:8px;"></i> Preview Email (${variantName})</h2>
         <p class="gorgeous-dialog-subtitle">Review the changes and choose to accept, edit, or cancel</p>
       </div>
       <div class="gorgeous-dialog-content">
         <div class="gorgeous-content-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
           <div class="gorgeous-content-section">
-            <h3>📝 Original Text</h3>
+            <h3><i class="fa-solid fa-file-lines" style="color:#2563eb;margin-right:6px;"></i> Original Text</h3>
             <textarea id="originalTextArea" class="gorgeous-text-area gorgeous-original-area">${originalText}</textarea>
             <div style="margin-top: 8px; text-align: left; display: flex; gap: 10px; align-items: center;">
               <button id="speechInputBtn" style="padding: 6px 14px; border-radius: 8px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                <span style='font-size: 16px;'>🎤</span> Speech Input
+                <i class="fa-solid fa-microphone" style="color:#a78bfa;font-size:16px;"></i> Speech Input
               </button>
-              <button id="translateBtn" style="padding: 6px 14px; border-radius: 8px; border: none; background: linear-gradient(135deg, #38b2ac 0%, #4299e1 100%); color: white; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                <span style='font-size: 16px;'>🌐</span> Translate
+              <button id="translateBtn" style="padding: 6px 14px; border-radius:
+                8px; border: none; background: linear-gradient(135deg, #38b2ac 0%, #4299e1 100%); color: white; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-globe" style="color:rgb(232, 241, 97);font-size:16px;"></i> Translate
               </button>
             </div>
           </div>
           <div class="gorgeous-content-section">
-            <h3>🌐 Translated Text</h3>
+            <h3><i class="fa-solid fa-globe" style="color:#14b8a6;margin-right:6px;"></i> Translated Text</h3>
             <textarea id="translatedTextArea" class="gorgeous-text-area gorgeous-translated-area" placeholder="(Translation will appear here)"></textarea>
           </div>
           <div class="gorgeous-content-section">
-            <h3>✨ Rewritten Text</h3>
+            <h3><i class="fa-solid fa-wand-magic-sparkles" style="color:#22c55e;margin-right:6px;"></i> Rewritten Text</h3>
             <textarea id="rewrittenTextArea" class="gorgeous-text-area gorgeous-rewritten-area">${rewrittenText}</textarea>
           </div>
         </div>
       </div>
       <div class="gorgeous-feedback-section">
-        <h4 class="gorgeous-feedback-title">💬 Feedback for Improvement</h4>
+        <h4 class="gorgeous-feedback-title"><i class="fa-solid fa-comment-dots" style="color:#f59e42;margin-right:6px;"></i> Feedback for Improvement</h4>
         <div class="gorgeous-feedback-area-container">
           <textarea id="feedbackTextArea" class="gorgeous-feedback-area" placeholder="e.g., 'Make it more brief', 'Add more details', 'Make it more formal', 'Use simpler language'..."></textarea>
-          <button id="regenerateBtn" class="gorgeous-regenerate-btn">♻ Regenerate</button>
+          <button id="regenerateBtn" class="gorgeous-regenerate-btn"><i class="fa-solid fa-arrows-rotate" style="color:rgb(255, 255, 255);margin-right:4px;"></i> Regenerate</button>
         </div>
         <div id="feedbackSuggestions" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
       </div>
       <div class="gorgeous-dialog-footer">
-        <button id="cancelBtn" class="gorgeous-footer-btn gorgeous-cancel-btn">✖ Cancel</button>
-        <button id="acceptBtn" class="gorgeous-footer-btn gorgeous-accept-btn">✔ Accept Changes</button>
+        <button id="cancelBtn" class="gorgeous-footer-btn gorgeous-cancel-btn"><i class="fa-solid fa-times" style="color:#ef4444;margin-right:6px;"></i> Cancel</button>
+        <button id="acceptBtn" class="gorgeous-footer-btn gorgeous-accept-btn"><i class="fa-solid fa-check" style="color:rgb(255, 255, 255);margin-right:6px;"></i> Accept Changes</button>
       </div>
     `;
 
@@ -1015,8 +1028,7 @@ class GmailRewriter {
 
     dialog.querySelector('#regenerateBtn').addEventListener('click', async (e) => {
       // Use translated text if available, otherwise use original text
-      const translatedText = dialog.querySelector('#translatedTextArea').value.trim();
-      const currentText = translatedText ? translatedText : dialog.querySelector('#originalTextArea').value.trim();
+      const currentText = dialog.querySelector('#originalTextArea').value.trim();
       const feedback = dialog.querySelector('#feedbackTextArea').value.trim();
 
       if (!currentText) return this.showMessage('Please enter some text to rewrite.', 'error');
@@ -1024,7 +1036,7 @@ class GmailRewriter {
 
       const btn = e.target;
       const originalButtonText = btn.innerHTML;
-      btn.innerHTML = '♻ Regenerating...';
+      btn.innerHTML = '<i class="fa-solid fa-arrows-rotate" style="color:rgb(255, 255, 255);margin-right:4px;"></i> Regenerating...';
       btn.disabled = true;
 
       try {
@@ -1045,55 +1057,78 @@ class GmailRewriter {
       const translateBtn = dialog.querySelector('#translateBtn');
       const originalTextArea = dialog.querySelector('#originalTextArea');
       const translatedTextArea = dialog.querySelector('#translatedTextArea');
-      if (translateBtn && originalTextArea && translatedTextArea) {
-        translateBtn.addEventListener('click', async () => {
-          const textToTranslate = originalTextArea.value.trim();
-          if (!textToTranslate) {
-            this.showMessage('Please enter text to translate.', 'error');
+      const rewrittenTextArea = dialog.querySelector('#rewrittenTextArea');
+      // Disable translate button until rewritten text is available
+      if (translateBtn) {
+        translateBtn.disabled = !rewrittenTextArea.value.trim();
+      }
+      // Only translate rewritten text
+      const doTranslate = async () => {
+        // Preprocess: preserve line breaks and paragraphs
+        let textToTranslate = rewrittenTextArea.value.trim();
+        // Replace double newlines with [[PARA]], single newlines with [[BR]]
+        textToTranslate = textToTranslate.replace(/\n\n/g, '[[PARA]]').replace(/\n/g, '[[BR]]');
+        if (!textToTranslate) {
+          this.showMessage('No rewritten text to translate.', 'error');
+          return;
+        }
+        translatedTextArea.value = 'Translating...';
+        const originalBtnHTML = translateBtn.innerHTML;
+        translateBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="spinning"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg> Translating...';
+        translateBtn.disabled = true;
+        try {
+          const settings = await new Promise(resolve => {
+            chrome.storage.sync.get(['googleTranslateApiKey', 'targetLanguage'], resolve);
+          });
+          const apiKey = settings.googleTranslateApiKey;
+          const targetLanguage = settings.targetLanguage && settings.targetLanguage.code;
+          if (!apiKey || !targetLanguage) {
+            translatedTextArea.value = '';
+            this.showMessage('Google Translate API key or target language not set. Please check extension settings.', 'error');
+            translateBtn.innerHTML = originalBtnHTML;
+            translateBtn.disabled = false;
             return;
           }
-          translatedTextArea.value = 'Translating...';
-          translateBtn.disabled = true;
-          try {
-            // Get Google Translate API key and target language from chrome.storage
-            const settings = await new Promise(resolve => {
-              chrome.storage.sync.get(['googleTranslateApiKey', 'targetLanguage'], resolve);
-            });
-            const apiKey = settings.googleTranslateApiKey;
-            const targetLanguage = settings.targetLanguage && settings.targetLanguage.code;
-            if (!apiKey || !targetLanguage) {
-              translatedTextArea.value = '';
-              this.showMessage('Google Translate API key or target language not set. Please check extension settings.', 'error');
-              translateBtn.disabled = false;
-              return;
-            }
-            // Call Google Translate API
-            const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                q: textToTranslate,
-                target: targetLanguage
-              })
-            });
-            const data = await response.json();
-            if (data && data.data && data.data.translations && data.data.translations[0]) {
-              translatedTextArea.value = data.data.translations[0].translatedText;
-              this.showMessage('Translation complete!', 'success');
-            } else if (data.error && data.error.message) {
-              translatedTextArea.value = '';
-              this.showMessage('Translation error: ' + data.error.message, 'error');
-            } else {
-              translatedTextArea.value = '';
-              this.showMessage('Unknown translation error.', 'error');
-            }
-          } catch (err) {
+          const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              q: textToTranslate,
+              target: targetLanguage
+            })
+          });
+          const data = await response.json();
+          if (data && data.data && data.data.translations && data.data.translations[0]) {
+            // Restore formatting markers
+            let translated = data.data.translations[0].translatedText;
+            translated = translated.replace(/\[\[PARA\]\]/g, '\n\n').replace(/\[\[BR\]\]/g, '\n');
+            translatedTextArea.value = translated;
+            this.showMessage('Translation complete!', 'success');
+          } else if (data.error && data.error.message) {
             translatedTextArea.value = '';
-            this.showMessage('Failed to translate. Please check your API key and network.', 'error');
-          } finally {
-            translateBtn.disabled = false;
+            this.showMessage('Translation error: ' + data.error.message, 'error');
+          } else {
+            translatedTextArea.value = '';
+            this.showMessage('Unknown translation error.', 'error');
           }
+        } catch (err) {
+          translatedTextArea.value = '';
+          this.showMessage('Failed to translate. Please check your API key and network.', 'error');
+        } finally {
+          translateBtn.innerHTML = originalBtnHTML;
+          translateBtn.disabled = false;
+        }
+      };
+      if (translateBtn && rewrittenTextArea) {
+        translateBtn.addEventListener('click', doTranslate);
+        // Enable translate button only if rewritten text is present
+        rewrittenTextArea.addEventListener('input', () => {
+          translateBtn.disabled = !rewrittenTextArea.value.trim();
         });
+      }
+      // Auto-translate rewritten text on dialog open
+      if (rewrittenTextArea && rewrittenTextArea.value.trim()) {
+        doTranslate();
       }
     }, 200);
 
@@ -1113,7 +1148,7 @@ class GmailRewriter {
           if (listening) {
             if (recognition) recognition.stop();
             listening = false;
-            speechBtn.innerHTML = "<span style='font-size: 16px;'>🎤</span> Speech Input";
+            speechBtn.innerHTML = "<i class='fa-solid fa-microphone' style='color:#a78bfa;font-size:16px;'></i> Speech Input";
             return;
           }
           const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1123,7 +1158,7 @@ class GmailRewriter {
           recognition.maxAlternatives = 1;
           listening = true;
           fullTranscript = originalTextArea.value || '';
-          speechBtn.innerHTML = "<span style='font-size: 16px;'>🛑</span> Listening...";
+          speechBtn.innerHTML = "<i class='fa-solid fa-microphone-slash' style='color:#ef4444;font-size:16px;'></i> Listening...";
           recognition.onresult = (event) => {
             let interim = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -1138,13 +1173,13 @@ class GmailRewriter {
           };
           recognition.onerror = (event) => {
             listening = false;
-            speechBtn.innerHTML = "<span style='font-size: 16px;'>🎤</span> Speech Input";
+            speechBtn.innerHTML = "<i class='fa-solid fa-microphone' style='color:#a78bfa;font-size:16px;'></i> Speech Input";
             this.showMessage('Speech recognition error: ' + event.error, 'error');
           };
           recognition.onend = () => {
             if (listening) {
               listening = false;
-              speechBtn.innerHTML = "<span style='font-size: 16px;'>🎤</span> Speech Input";
+              speechBtn.innerHTML = "<i class='fa-solid fa-microphone' style='color:#a78bfa;font-size:16px;'></i> Speech Input";
             }
             this.showMessage('Speech input complete!', 'success');
           };
@@ -1236,13 +1271,12 @@ class GmailRewriter {
     messageEl.className = `native-english-message ${type}`;
 
     const styles = {
-      success: { emoji: '✔', bg: 'linear-gradient(135deg, #48bb78, #38a169)', shadow: 'rgba(72, 187, 120, 0.4)' },
-      info: { emoji: 'ℹ', bg: 'linear-gradient(135deg, #4299e1, #3182ce)', shadow: 'rgba(66, 153, 225, 0.4)' },
-      error: { emoji: '✖', bg: 'linear-gradient(135deg, #f56565, #e53e3e)', shadow: 'rgba(245, 101, 101, 0.4)' }
+      success: { icon: '<i class="fa-solid fa-check-circle" style="color:#22c55e;margin-right:6px;"></i>', bg: 'linear-gradient(135deg, #48bb78, #38a169)', shadow: 'rgba(72, 187, 120, 0.4)' },
+      info: { icon: '<i class="fa-solid fa-info-circle" style="color:#6366f1;margin-right:6px;"></i>', bg: 'linear-gradient(135deg, #4299e1, #3182ce)', shadow: 'rgba(66, 153, 225, 0.4)' },
+      error: { icon: '<i class="fa-solid fa-times-circle" style="color:#ef4444;margin-right:6px;"></i>', bg: 'linear-gradient(135deg, #f56565, #e53e3e)', shadow: 'rgba(245, 101, 101, 0.4)' }
     };
-
     const style = styles[type] || styles.error;
-    messageEl.textContent = `${style.emoji} ${message}`;
+    messageEl.innerHTML = `${style.icon}${message}`;
     messageEl.style.cssText = `position: fixed;top: 24px;right: 24px;padding: 16px 24px;border-radius: 4px;z-index: 11000;font-size: 14px;font-weight: 600;font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;max-width: 400px;backdrop-filter: blur(10px);cursor: pointer;background: ${style.bg};color: white;box-shadow: 0 8px 32px ${style.shadow};`;
 
     messageEl.addEventListener('click', () => {

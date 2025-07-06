@@ -1001,7 +1001,7 @@ class GmailRewriter {
           <textarea id="feedbackTextArea" class="gorgeous-feedback-area" placeholder="e.g., 'Make it more brief', 'Add more details', 'Make it more formal', 'Use simpler language'..."></textarea>
           <button id="regenerateBtn" class="gorgeous-regenerate-btn"><i class="fa-solid fa-arrows-rotate" style="color:rgb(255, 255, 255);margin-right:4px;"></i> Regenerate</button>
         </div>
-        <div id="feedbackSuggestions" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+        <div id="feedbackChipsRow" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
       </div>
       <div class="gorgeous-dialog-footer">
         <button id="cancelBtn" class="gorgeous-footer-btn gorgeous-cancel-btn"><i class="fa-solid fa-times" style="color:#ef4444;margin-right:6px;"></i> Cancel</button>
@@ -1190,49 +1190,117 @@ class GmailRewriter {
 
     // Add feedback suggestion buttons
     setTimeout(() => {
-      const suggestions = [
-        'Make it more simple',
-        'Make it more formal',
-        'Add more details',
-        'Make it more brief',
-        'Use friendlier tone',
-        'Use simpler language',
-        'Make it more polite',
-        'Add a call to action'
-      ];
-      const feedbackSuggestions = dialog.querySelector('#feedbackSuggestions');
-      const feedbackTextArea = dialog.querySelector('#feedbackTextArea');
-      if (feedbackSuggestions && feedbackTextArea) {
-        feedbackSuggestions.innerHTML = '';
-        suggestions.forEach(text => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.textContent = text;
-          btn.style.cssText = `
-            background: #f3f4f6;
-            color: #374151;
-            border: 1px solid #e5e7eb;
-            border-radius: 7px;
-            font-size: 13px;
-            padding: 4px 10px;
-            margin: 0;
-            cursor: pointer;
-            transition: background 0.2s;
-            font-family: inherit;
-          `;
-          btn.addEventListener('mouseenter', () => btn.style.background = '#e0e7ef');
-          btn.addEventListener('mouseleave', () => btn.style.background = '#f3f4f6');
-          btn.addEventListener('click', () => {
-            let current = feedbackTextArea.value.trim();
-            if (current && !current.endsWith(',')) current += ', ';
-            if (current && !current.endsWith(', ')) current += ' ';
-            if (current && current.includes(text)) return; // avoid duplicate
-            feedbackTextArea.value = current + text;
-            feedbackTextArea.focus();
-          });
-          feedbackSuggestions.appendChild(btn);
-        });
+      const feedbackAreaContainer = dialog.querySelector('.gorgeous-feedback-area-container');
+      const feedbackInput = dialog.querySelector('#feedbackTextArea');
+      let chipsRow = dialog.querySelector('#feedbackChipsRow');
+      if (!chipsRow) {
+        chipsRow = document.createElement('div');
+        chipsRow.id = 'feedbackChipsRow';
+        chipsRow.style.cssText = 'margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;';
+        feedbackAreaContainer.insertBefore(chipsRow, feedbackInput.nextSibling);
       }
+      // Load chips from storage or use defaults
+      chrome.storage.sync.get(['feedbackChips'], (result) => {
+        let chips = Array.isArray(result.feedbackChips) && result.feedbackChips.length > 0 ? result.feedbackChips : [
+          'Make it more simple',
+          'Make it more formal',
+          'Add more details',
+          'Make it more brief',
+          'Use friendlier tone',
+          'Use simpler language',
+          'Make it more polite',
+          'Add a call to action'
+        ];
+        let showInput = false;
+        let chipInput = null;
+        function saveChips() {
+          chrome.storage.sync.set({ feedbackChips: chips });
+        }
+        function renderChips() {
+          chipsRow.innerHTML = '';
+          chips.forEach((chip, idx) => {
+            const chipEl = document.createElement('span');
+            chipEl.style.cssText = `
+              background: linear-gradient(135deg, #fbbf24 0%, #f59e42 100%);
+              color: #7c2d12;
+              border-radius: 7px;
+              font-size: 15px;
+              padding: 4px 10px 4px 10px;
+              margin: 0;
+              display: flex; align-items: center; gap: 4px;
+              border: 1px solid #f59e42;
+              cursor: pointer;
+              user-select: none;
+              font-weight: 500;
+              box-shadow: 0 1px 4px rgba(251,191,36,0.08);
+            `;
+            chipEl.textContent = chip;
+            chipEl.addEventListener('click', (e) => {
+              if (e.target !== chipEl) return;
+              feedbackInput.value = chip;
+              feedbackInput.focus();
+            });
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.innerHTML = '<i class="fa-solid fa-times" style="color:#ef4444;font-size:13px;"></i>';
+            removeBtn.style.cssText = 'background: none; border: none; margin-left: 6px; cursor: pointer; padding: 0;';
+            removeBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              chips.splice(idx, 1);
+              saveChips();
+              renderChips();
+            });
+            chipEl.appendChild(removeBtn);
+            chipsRow.appendChild(chipEl);
+          });
+          // Plus button or input
+          if (showInput) {
+            chipInput = document.createElement('input');
+            chipInput.type = 'text';
+            chipInput.placeholder = 'Add feedback...';
+            chipInput.style.cssText = `
+              font-size: 15px;
+              padding: 4px 10px;
+              border-radius: 7px;
+              border: 1px solid #f59e42;
+              outline: none;
+              min-width: 90px;
+              margin: 0;
+            `;
+            chipInput.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') {
+                const val = chipInput.value.trim();
+                if (val && !chips.includes(val)) {
+                  chips.push(val);
+                  saveChips();
+                  showInput = false;
+                  renderChips();
+                }
+              } else if (e.key === 'Escape') {
+                showInput = false;
+                renderChips();
+              }
+            });
+            chipInput.addEventListener('blur', () => {
+              showInput = false;
+              renderChips();
+            });
+            chipsRow.appendChild(chipInput);
+            chipInput.focus();
+          } else {
+            const plusBtn = document.createElement('button');
+            plusBtn.type = 'button';
+            plusBtn.innerHTML = '<i class="fa-solid fa-plus" style="color:#f59e42;font-size:15px;"></i>';
+            plusBtn.style.cssText = 'background: linear-gradient(135deg, #fbbf24 0%, #f59e42 100%); border: 1px solid #f59e42; border-radius: 7px; padding: 4px 10px; margin: 0; cursor: pointer; display: flex; align-items: center; color: #7c2d12; font-weight: 500;';
+            plusBtn.addEventListener('click', () => {
+              showInput = true;
+              renderChips();
+            });
+            chipsRow.appendChild(plusBtn);
+          }
+        }
+        renderChips();
+      });
     }, 200);
 
     overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
@@ -1269,7 +1337,6 @@ class GmailRewriter {
   showMessage(message, type) {
     const messageEl = document.createElement('div');
     messageEl.className = `native-english-message ${type}`;
-
     const styles = {
       success: { icon: '<i class="fa-solid fa-check-circle" style="color:#22c55e;margin-right:6px;"></i>', bg: 'linear-gradient(135deg, #48bb78, #38a169)', shadow: 'rgba(72, 187, 120, 0.4)' },
       info: { icon: '<i class="fa-solid fa-info-circle" style="color:#6366f1;margin-right:6px;"></i>', bg: 'linear-gradient(135deg, #4299e1, #3182ce)', shadow: 'rgba(66, 153, 225, 0.4)' },
@@ -1277,20 +1344,39 @@ class GmailRewriter {
     };
     const style = styles[type] || styles.error;
     messageEl.innerHTML = `${style.icon}${message}`;
-    messageEl.style.cssText = `position: fixed;top: 24px;right: 24px;padding: 16px 24px;border-radius: 4px;z-index: 11000;font-size: 14px;font-weight: 600;font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;max-width: 400px;backdrop-filter: blur(10px);cursor: pointer;background: ${style.bg};color: white;box-shadow: 0 8px 32px ${style.shadow};`;
-
+    // Stack notifications: find existing, offset new ones
+    const existing = Array.from(document.querySelectorAll('.native-english-message'));
+    let offset = 24;
+    if (existing.length > 0) {
+      offset += existing.length * 56; // 56px per notification
+    }
+    messageEl.style.cssText = `position: fixed;top: ${offset}px;right: 24px;padding: 16px 24px;border-radius: 4px;z-index: 11000;font-size: 14px;font-weight: 600;font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;max-width: 400px;backdrop-filter: blur(10px);cursor: pointer;background: ${style.bg};color: white;box-shadow: 0 8px 32px ${style.shadow};transition: top 0.2s;`;
     messageEl.addEventListener('click', () => {
       messageEl.style.animation = 'messageSlideOut 0.3s ease-in forwards';
       setTimeout(() => messageEl.remove(), 300);
+      // Re-stack remaining notifications
+      setTimeout(() => {
+        Array.from(document.querySelectorAll('.native-english-message')).forEach((el, i) => {
+          el.style.top = `${24 + i * 56}px`;
+        });
+      }, 350);
     });
-
     document.body.appendChild(messageEl);
-
+    // Re-stack all notifications
+    Array.from(document.querySelectorAll('.native-english-message')).forEach((el, i) => {
+      el.style.top = `${24 + i * 56}px`;
+    });
     const dismissTime = type === 'info' ? 2000 : 4000;
     setTimeout(() => {
       if (messageEl.parentNode) {
         messageEl.style.animation = 'messageSlideOut 0.3s ease-in forwards';
         setTimeout(() => messageEl.remove(), 300);
+        // Re-stack remaining notifications
+        setTimeout(() => {
+          Array.from(document.querySelectorAll('.native-english-message')).forEach((el, i) => {
+            el.style.top = `${24 + i * 56}px`;
+          });
+        }, 350);
       }
     }, dismissTime);
   }

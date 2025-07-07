@@ -662,7 +662,7 @@ class GmailRewriter {
 
     const style = document.createElement('style');
     style.id = 'native-english-button-styles';
-    style.textContent = `.native-english-rewrite-btn{display:inline-block!important;margin-left:12px!important;user-select:none!important}.native-english-rewrite-btn .rewrite-button{display:inline-flex!important;align-items:center!important;gap:8px!important;padding:8px 10px!important;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)!important;color:white!important;border:none!important;border-radius:12px!important;font-size:14px!important;font-weight:600!important;cursor:pointer!important;transition:all .3s ease!important;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif!important;box-shadow:0 4px 15px rgba(102,126,234,.3)!important;position:relative!important;overflow:hidden!important;user-select:none!important;outline:none!important}.native-english-rewrite-btn .rewrite-button:hover{background:linear-gradient(135deg,#5a67d8 0%,#6b46c1 100%)!important;box-shadow:0 8px 25px rgba(102,126,234,.4)!important;transform:translateY(-2px)!important}.native-english-rewrite-btn .rewrite-button:active{transform:translateY(0px)!important}.native-english-rewrite-btn .rewrite-button:disabled{background:linear-gradient(135deg,#a0aec0,#cbd5e0)!important;cursor:not-allowed!important;transform:none!important;box-shadow:none!important}.native-english-rewrite-btn .rewrite-button svg{width:16px!important;height:16px!important;fill:currentColor!important}`;
+    style.textContent = `.native-english-rewrite-btn{display:inline-block!important;margin-left:12px!important;user-select:none!important}.native-english-rewrite-btn .rewrite-button{display:inline-flex!important;align-items:center!important;gap:8px!important;padding:8px 10px!important;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)!important;color:white!important;border:none!important;border-radius:20px!important;font-size:12px!important;font-weight:600!important;cursor:pointer!important;transition:all .3s ease!important;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif!important;box-shadow:0 4px 15px rgba(102,126,234,.3)!important;position:relative!important;overflow:hidden!important;user-select:none!important;outline:none!important}.native-english-rewrite-btn .rewrite-button:hover{background:linear-gradient(135deg,#5a67d8 0%,#6b46c1 100%)!important;box-shadow:0 8px 25px rgba(102,126,234,.4)!important;transform:translateY(-2px)!important}.native-english-rewrite-btn .rewrite-button:active{transform:translateY(0px)!important}.native-english-rewrite-btn .rewrite-button:disabled{background:linear-gradient(135deg,#a0aec0,#cbd5e0)!important;cursor:not-allowed!important;transform:none!important;box-shadow:none!important}.native-english-rewrite-btn .rewrite-button svg{width:16px!important;height:16px!important;fill:currentColor!important}`;
     document.head.appendChild(style);
   }
 
@@ -673,7 +673,7 @@ class GmailRewriter {
 
     const rewriteBtn = document.createElement('div');
     rewriteBtn.className = 'native-english-rewrite-btn';
-    rewriteBtn.innerHTML = `<button class="rewrite-button" title="Rewrite for ${this.englishVariant}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.01-4.65.51-6.84L9.37 4.5C8.16 3.42 6.49 3.42 5.28 4.5l-1.5 1.31C2.57 6.87 2.3 7.96 2.66 9c.36 1.04 1.2 1.88 2.24 2.24 1.04.36 2.13.09 3.19-.57l.03.03L5.58 13.8c-.35.35-.35.92 0 1.27.35.35.92.35 1.27 0l2.54-2.54.03.03c1.66 1.66 4.38 1.66 6.04 0l1.41-1.41c.39-.39.39-1.02 0-1.41-.39-.39-1.02-.39-1.41 0l-1.41 1.41z"/></svg>${this.englishVariant}</button>`;
+    rewriteBtn.innerHTML = `<button class="rewrite-button" title="Rewrite for ${this.englishVariant}"><i class="fa-solid fa-wand-magic-sparkles"></i></button>`;
 
     rewriteBtn.querySelector('.rewrite-button').addEventListener('click', () => this.handleRewrite(composeWindow));
     // Try to find the .aDh container (Gmail action bar area)
@@ -809,7 +809,7 @@ class GmailRewriter {
 
     const button = composeWindow.querySelector('.rewrite-button');
     const originalButtonText = button.innerHTML;
-    button.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="spinning"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg><span>...</span>`;
+    button.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles fa-spin"></i>`;
     button.disabled = true;
 
     try {
@@ -967,13 +967,13 @@ class GmailRewriter {
 
     dialog.innerHTML = `
       <div class="gorgeous-dialog-header">
-        <h2 class="gorgeous-dialog-title"><i class="fa-solid fa-magic-wand-sparkles" style="color:rgb(185, 224, 43);margin-right:8px;"></i> Preview Email (${variantName})</h2>
+        <h2 class="gorgeous-dialog-title"><i class="fa-solid fa-magic-wand-sparkles" style="color:rgb(185, 224, 43);margin-right:8px;"></i> Preview Email</h2>
         <p class="gorgeous-dialog-subtitle">Review the changes and choose to accept, edit, or cancel</p>
       </div>
       <div class="gorgeous-dialog-content">
         <div class="gorgeous-content-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
           <div class="gorgeous-content-section">
-            <h3><i class="fa-solid fa-file-lines" style="color:#2563eb;margin-right:6px;"></i> Original Text</h3>
+            <h3 style="display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-file-lines" style="color:#2563eb;margin-right:6px;"></i> Original Text <span id="inputLangDropdownContainer"></span></h3>
             <textarea id="originalTextArea" class="gorgeous-text-area gorgeous-original-area">${originalText}</textarea>
             <div style="margin-top: 8px; text-align: left; display: flex; gap: 10px; align-items: center;">
               <button id="speechInputBtn" style="padding: 6px 14px; border-radius: 8px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
@@ -986,11 +986,11 @@ class GmailRewriter {
             </div>
           </div>
           <div class="gorgeous-content-section">
-            <h3><i class="fa-solid fa-globe" style="color:#14b8a6;margin-right:6px;"></i> Translated Text</h3>
+            <h3 style="display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-globe" style="color:#14b8a6;margin-right:6px;"></i> Translated Text <span id="targetLangDropdownContainer"></span></h3>
             <textarea id="translatedTextArea" class="gorgeous-text-area gorgeous-translated-area" placeholder="(Translation will appear here)"></textarea>
           </div>
           <div class="gorgeous-content-section">
-            <h3><i class="fa-solid fa-wand-magic-sparkles" style="color:#22c55e;margin-right:6px;"></i> Rewritten Text</h3>
+            <h3 style="display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-wand-magic-sparkles" style="color:#22c55e;margin-right:6px;"></i> Rewritten Text <span id="variantDropdownContainer"></span></h3>
             <textarea id="rewrittenTextArea" class="gorgeous-text-area gorgeous-rewritten-area">${rewrittenText}</textarea>
           </div>
         </div>
@@ -1326,6 +1326,109 @@ class GmailRewriter {
       textArea.focus();
       textArea.setSelectionRange(textArea.value.length, textArea.value.length);
     }, 100);
+
+    // After dialog.innerHTML = ...
+    // Render dropdowns for each section
+    setTimeout(async () => {
+      // Get current settings
+      const settings = await new Promise(resolve => {
+        chrome.storage.sync.get(['inputLanguage', 'targetLanguage', 'englishVariant'], resolve);
+      });
+      // --- Input Language Dropdown ---
+      const inputLangDropdown = document.createElement('select');
+      inputLangDropdown.className = 'gorgeous-dropdown';
+      inputLangDropdown.style.cssText = 'padding:4px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;background:white;color:#2563eb;font-weight:600;outline:none;min-width:110px;';
+      const detectOption = document.createElement('option');
+      detectOption.value = 'auto';
+      detectOption.textContent = 'Detect Language';
+      inputLangDropdown.appendChild(detectOption);
+      supportedLanguages.forEach(lang => {
+        const opt = document.createElement('option');
+        opt.value = lang.code;
+        opt.textContent = lang.name;
+        inputLangDropdown.appendChild(opt);
+      });
+      inputLangDropdown.value = settings.inputLanguage && settings.inputLanguage.code ? settings.inputLanguage.code : 'auto';
+      document.getElementById('inputLangDropdownContainer').appendChild(inputLangDropdown);
+      // --- Target Language Dropdown ---
+      const targetLangDropdown = document.createElement('select');
+      targetLangDropdown.className = 'gorgeous-dropdown';
+      targetLangDropdown.style.cssText = 'padding:4px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;background:white;color:#14b8a6;font-weight:600;outline:none;min-width:110px;';
+      supportedLanguages.forEach(lang => {
+        const opt = document.createElement('option');
+        opt.value = lang.code;
+        opt.textContent = lang.name;
+        targetLangDropdown.appendChild(opt);
+      });
+      targetLangDropdown.value = settings.targetLanguage && settings.targetLanguage.code ? settings.targetLanguage.code : 'en';
+      document.getElementById('targetLangDropdownContainer').appendChild(targetLangDropdown);
+      // --- English Variant Combo Box in Preview Dialog ---
+      const variantInput = document.createElement('input');
+      variantInput.type = 'text';
+      variantInput.id = 'variantInput';
+      variantInput.placeholder = 'Type or select English variant...';
+      variantInput.className = 'gorgeous-dropdown';
+      variantInput.style.cssText = 'padding:5px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;background:white;color:#22c55e;font-weight:600;outline:none;min-width:110px; max-width:170px;';
+      const variantDropdown = document.createElement('div');
+      variantDropdown.id = 'variantDropdown';
+      variantDropdown.style.cssText = 'display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #e2e8f0; border-radius:0 0 12px 12px; max-height:180px; overflow-y:auto; z-index:10; font-size:13px; font-weight:600; color: #22c55e;';
+      // Helper for filtering
+      function filterEnglishVariants(query) {
+        query = query.trim().toLowerCase();
+        if (!query) return englishVariants;
+        return englishVariants.filter(v =>
+          v.name.toLowerCase().includes(query) ||
+          v.code.toLowerCase().includes(query)
+        );
+      }
+      // Set initial value
+      variantInput.value = settings.englishVariant && englishVariants.find(v => v.code === settings.englishVariant) ? englishVariants.find(v => v.code === settings.englishVariant).name : (settings.englishVariant || '');
+      // Attach to container
+      const variantContainer = document.getElementById('variantDropdownContainer');
+      variantContainer.innerHTML = '';
+      variantContainer.style.position = 'relative';
+      variantContainer.appendChild(variantInput);
+      variantContainer.appendChild(variantDropdown);
+      // Show dropdown on input
+      variantInput.addEventListener('input', (e) => {
+        const value = e.target.value;
+        const matches = filterEnglishVariants(value);
+        if (matches.length > 0) {
+          variantDropdown.innerHTML = matches.map(v =>
+            `<div class="language-option" data-code="${v.code}" style="padding:8px 12px; cursor:pointer;">${v.name}</div>`
+          ).join('');
+          variantDropdown.style.display = 'block';
+        } else {
+          variantDropdown.innerHTML = '<div style="padding:8px 12px; color:#aaa;">No matches found</div>';
+          variantDropdown.style.display = 'block';
+        }
+      });
+      // Select from dropdown
+      variantDropdown.addEventListener('mousedown', async (e) => {
+        const option = e.target.closest('.language-option');
+        if (option) {
+          const variantName = option.textContent;
+          variantInput.value = variantName;
+          variantDropdown.style.display = 'none';
+          const variant = englishVariants.find(v => v.name === variantName);
+          await chrome.storage.sync.set({ englishVariant: variant ? variant.code : variantName });
+        }
+      });
+      // Hide dropdown on outside click
+      document.addEventListener('mousedown', (e) => {
+        if (!variantDropdown.contains(e.target) && e.target !== variantInput) {
+          variantDropdown.style.display = 'none';
+        }
+      });
+      // Save custom value on blur
+      variantInput.addEventListener('blur', async () => {
+        const value = variantInput.value.trim();
+        if (value) {
+          const variant = englishVariants.find(v => v.name === value || v.code === value);
+          await chrome.storage.sync.set({ englishVariant: variant ? variant.code : value });
+        }
+      });
+    }, 0);
   }
 
   handleRegenerateError(error) {
@@ -1412,3 +1515,43 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
 });
+
+// --- Language/variant lists (reuse from popup.js) ---
+const supportedLanguages = [
+  { name: 'Abkhaz', code: 'ab' }, { name: 'Afrikaans', code: 'af' }, { name: 'Albanian', code: 'sq' },
+  { name: 'Amharic', code: 'am' }, { name: 'Arabic', code: 'ar' }, { name: 'Armenian', code: 'hy' },
+  { name: 'Assamese', code: 'as' }, { name: 'Aymara', code: 'ay' }, { name: 'Azerbaijani', code: 'az' },
+  { name: 'Basque', code: 'eu' }, { name: 'Belarusian', code: 'be' }, { name: 'Bengali', code: 'bn' },
+  { name: 'Bosnian', code: 'bs' }, { name: 'Bulgarian', code: 'bg' }, { name: 'Burmese', code: 'my' },
+  { name: 'Catalan', code: 'ca' }, { name: 'Chinese (Simplified)', code: 'zh-CN' }, { name: 'Chinese (Traditional)', code: 'zh-TW' },
+  { name: 'Croatian', code: 'hr' }, { name: 'Czech', code: 'cs' }, { name: 'Danish', code: 'da' },
+  { name: 'Dutch', code: 'nl' }, { name: 'English', code: 'en' }, { name: 'Estonian', code: 'et' },
+  { name: 'Filipino', code: 'fil' }, { name: 'Finnish', code: 'fi' }, { name: 'French', code: 'fr' },
+  { name: 'German', code: 'de' }, { name: 'Greek', code: 'el' }, { name: 'Gujarati', code: 'gu' },
+  { name: 'Haitian Creole', code: 'ht' }, { name: 'Hebrew', code: 'he' }, { name: 'Hindi', code: 'hi' },
+  { name: 'Hungarian', code: 'hu' }, { name: 'Icelandic', code: 'is' }, { name: 'Indonesian', code: 'id' },
+  { name: 'Italian', code: 'it' }, { name: 'Japanese', code: 'ja' }, { name: 'Javanese', code: 'jv' },
+  { name: 'Kannada', code: 'kn' }, { name: 'Kazakh', code: 'kk' }, { name: 'Khmer', code: 'km' },
+  { name: 'Korean', code: 'ko' }, { name: 'Kurdish (Kurmanji)', code: 'ku' }, { name: 'Kyrgyz', code: 'ky' },
+  { name: 'Lao', code: 'lo' }, { name: 'Latvian', code: 'lv' }, { name: 'Lithuanian', code: 'lt' },
+  { name: 'Luxembourgish', code: 'lb' }, { name: 'Macedonian', code: 'mk' }, { name: 'Malay', code: 'ms' },
+  { name: 'Malayalam', code: 'ml' }, { name: 'Maltese', code: 'mt' }, { name: 'Maori', code: 'mi' },
+  { name: 'Marathi', code: 'mr' }, { name: 'Mongolian', code: 'mn' }, { name: 'Nepali', code: 'ne' },
+  { name: 'Norwegian', code: 'no' }, { name: 'Persian', code: 'fa' }, { name: 'Polish', code: 'pl' },
+  { name: 'Portuguese', code: 'pt' }, { name: 'Punjabi', code: 'pa' }, { name: 'Romanian', code: 'ro' },
+  { name: 'Russian', code: 'ru' }, { name: 'Serbian', code: 'sr' }, { name: 'Sinhala', code: 'si' },
+  { name: 'Slovak', code: 'sk' }, { name: 'Slovenian', code: 'sl' }, { name: 'Spanish', code: 'es' },
+  { name: 'Swahili', code: 'sw' }, { name: 'Swedish', code: 'sv' }, { name: 'Tamil', code: 'ta' },
+  { name: 'Telugu', code: 'te' }, { name: 'Thai', code: 'th' }, { name: 'Turkish', code: 'tr' },
+  { name: 'Ukrainian', code: 'uk' }, { name: 'Urdu', code: 'ur' }, { name: 'Uzbek', code: 'uz' },
+  { name: 'Vietnamese', code: 'vi' }, { name: 'Welsh', code: 'cy' }, { name: 'Xhosa', code: 'xh' },
+  { name: 'Yiddish', code: 'yi' }, { name: 'Yoruba', code: 'yo' }, { name: 'Zulu', code: 'zu' }
+];
+const englishVariants = [
+  { code: 'US', name: 'American English' },
+  { code: 'UK', name: 'British English' },
+  { code: 'AU', name: 'Australian English' },
+  { code: 'CA', name: 'Canadian English' },
+  { code: 'NZ', name: 'New Zealand English' },
+  { code: 'ZA', name: 'South African English' }
+];

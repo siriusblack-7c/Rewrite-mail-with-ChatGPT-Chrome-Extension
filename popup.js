@@ -2,7 +2,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('settingsForm');
     const apiKeyInput = document.getElementById('apiKey');
-    const englishVariantSelect = document.getElementById('englishVariant');
+    const englishVariantInput = document.getElementById('englishVariantInput');
+    const englishVariantDropdown = document.getElementById('englishVariantDropdown');
     const saveOpenAIBtn = document.getElementById('saveOpenAIBtn');
     const saveGoogleBtn = document.getElementById('saveGoogleBtn');
     const openaiStatusDiv = document.getElementById('openaiStatus');
@@ -140,6 +141,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         { name: 'Zulu', code: 'zu' }
     ];
 
+    const englishVariants = [
+        { code: 'US', name: 'United States (American English)' },
+        { code: 'UK', name: 'United Kingdom (British English)' },
+        { code: 'AU', name: 'Australia (Australian English)' },
+        { code: 'CA', name: 'Canada (Canadian English)' },
+        { code: 'NZ', name: 'New Zealand (New Zealand English)' },
+        { code: 'ZA', name: 'South Africa (South African English)' }
+    ];
+
     // Load existing settings
     await loadSettings();
 
@@ -179,9 +189,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 googleKeyStatus.style.color = '#ef4444';
             }
             if (result.englishVariant) {
-                englishVariantSelect.value = result.englishVariant;
+                // If it's a known code, show the name; else, show the custom value
+                const variant = englishVariants.find(v => v.code === result.englishVariant || v.name === result.englishVariant);
+                englishVariantInput.value = variant ? variant.name : result.englishVariant;
             } else {
-                englishVariantSelect.value = 'US';
+                englishVariantInput.value = '';
             }
             if (result.targetLanguage) {
                 const lang = supportedLanguages.find(l => l.code === result.targetLanguage.code || l.name === result.targetLanguage.name);
@@ -220,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function saveOpenAISettings() {
         const apiKey = apiKeyInput.value.trim();
-        const englishVariant = englishVariantSelect.value;
+        const englishVariant = englishVariantInput.value;
         let keyToUse = apiKey;
         // Allow language-only change if key is empty but one exists
         if (!apiKey) {
@@ -625,6 +637,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         inputLanguageSearchInput.value = 'Detect Language';
         selectedInputLanguage = 'auto';
         inputLanguageDropdown.style.display = 'none';
+    });
+
+    // --- English Variant Combo Box Logic ---
+    function filterEnglishVariants(query) {
+        query = query.trim().toLowerCase();
+        if (!query) return englishVariants;
+        return englishVariants.filter(v =>
+            v.name.toLowerCase().includes(query) ||
+            v.code.toLowerCase().includes(query)
+        );
+    }
+    englishVariantInput.addEventListener('input', (e) => {
+        const value = e.target.value;
+        const matches = filterEnglishVariants(value);
+        if (matches.length > 0) {
+            englishVariantDropdown.innerHTML = matches.map(v =>
+                `<div class="language-option" data-code="${v.code}" style="padding:8px 12px; cursor:pointer;">${v.name}</div>`
+            ).join('');
+            englishVariantDropdown.style.display = 'block';
+        } else {
+            englishVariantDropdown.innerHTML = '<div style="padding:8px 12px; color:#aaa;">No matches found</div>';
+            englishVariantDropdown.style.display = 'block';
+        }
+    });
+    englishVariantDropdown.addEventListener('mousedown', (e) => {
+        const option = e.target.closest('.language-option');
+        if (option) {
+            const variantName = option.textContent;
+            englishVariantInput.value = variantName;
+            englishVariantDropdown.style.display = 'none';
+            // Save as code if known, else as name
+            const variant = englishVariants.find(v => v.name === variantName);
+            chrome.storage.sync.set({ englishVariant: variant ? variant.code : variantName });
+        }
+    });
+    document.addEventListener('mousedown', (e) => {
+        if (!englishVariantDropdown.contains(e.target) && e.target !== englishVariantInput) {
+            englishVariantDropdown.style.display = 'none';
+        }
+    });
+    // Save custom value on blur
+    englishVariantInput.addEventListener('blur', () => {
+        const value = englishVariantInput.value.trim();
+        if (value) {
+            const variant = englishVariants.find(v => v.name === value || v.code === value);
+            chrome.storage.sync.set({ englishVariant: variant ? variant.code : value });
+        }
     });
 
     // Add a class for thin scrollbar styling (CSS will be updated separately)

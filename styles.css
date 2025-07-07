@@ -3,7 +3,7 @@
 .native-english-rewrite-btn {
     display: inline-block !important;
     position: absolute !important;
-    left: -80px !important;
+    left: -50px !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
     z-index: 9999 !important;

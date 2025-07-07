@@ -45,7 +45,7 @@ class GmailRewriter {
   }
 
   initializeVariantPrompts() {
-    const base = 'You are a professional writing assistant. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary.';
+    const base = 'You are a professional writing assistant. You have to rewrite the text into English. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary.';
 
     return {
       US: `${base} Use American spelling (e.g., "color", "analyze", "organize"), American terminology, and natural American phrasing to sound like a native American English speaker.`,
@@ -1036,7 +1036,7 @@ class GmailRewriter {
 
       const btn = e.target;
       const originalButtonText = btn.innerHTML;
-      btn.innerHTML = '<i class="fa-solid fa-arrows-rotate" style="color:rgb(255, 255, 255);margin-right:4px;"></i> Regenerating...';
+      btn.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin" style="color:rgb(255, 255, 255);margin-right:4px;"></i> Regenerating...';
       btn.disabled = true;
 
       try {
@@ -1078,10 +1078,11 @@ class GmailRewriter {
         translateBtn.disabled = true;
         try {
           const settings = await new Promise(resolve => {
-            chrome.storage.sync.get(['googleTranslateApiKey', 'targetLanguage'], resolve);
+            chrome.storage.sync.get(['googleTranslateApiKey', 'targetLanguage', 'inputLanguage'], resolve);
           });
           const apiKey = settings.googleTranslateApiKey;
           const targetLanguage = settings.targetLanguage && settings.targetLanguage.code;
+          const inputLanguage = settings.inputLanguage === 'auto' ? undefined : (settings.inputLanguage && settings.inputLanguage.code ? settings.inputLanguage.code : undefined);
           if (!apiKey || !targetLanguage) {
             translatedTextArea.value = '';
             this.showMessage('Google Translate API key or target language not set. Please check extension settings.', 'error');
@@ -1089,13 +1090,17 @@ class GmailRewriter {
             translateBtn.disabled = false;
             return;
           }
+          const requestBody = {
+            q: textToTranslate,
+            target: targetLanguage
+          };
+          if (inputLanguage) {
+            requestBody.source = inputLanguage;
+          }
           const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              q: textToTranslate,
-              target: targetLanguage
-            })
+            body: JSON.stringify(requestBody)
           });
           const data = await response.json();
           if (data && data.data && data.data.translations && data.data.translations[0]) {
@@ -1140,7 +1145,7 @@ class GmailRewriter {
       let listening = false;
       let fullTranscript = '';
       if (speechBtn && originalTextArea) {
-        speechBtn.addEventListener('click', () => {
+        speechBtn.addEventListener('click', async () => {
           if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
             this.showMessage('Speech recognition is not supported in this browser.', 'error');
             return;
@@ -1151,9 +1156,19 @@ class GmailRewriter {
             speechBtn.innerHTML = "<i class='fa-solid fa-microphone' style='color:#a78bfa;font-size:16px;'></i> Speech Input";
             return;
           }
+          // Get input language from storage
+          let recognitionLang = 'auto';
+          try {
+            const settings = await new Promise(resolve => {
+              chrome.storage.sync.get(['inputLanguage'], resolve);
+            });
+            if (settings.inputLanguage && settings.inputLanguage !== 'auto' && settings.inputLanguage.code) {
+              recognitionLang = settings.inputLanguage.code;
+            }
+          } catch (e) { }
           const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
           recognition = new SpeechRecognition();
-          recognition.lang = 'auto';
+          recognition.lang = recognitionLang;
           recognition.interimResults = true;
           recognition.maxAlternatives = 1;
           listening = true;
@@ -1222,16 +1237,15 @@ class GmailRewriter {
             const chipEl = document.createElement('span');
             chipEl.style.cssText = `
               background: linear-gradient(135deg, #fbbf24 0%, #f59e42 100%);
-              color: #7c2d12;
+              color:rgb(255, 255, 255);
               border-radius: 7px;
-              font-size: 15px;
+              font-size: 14px;
               padding: 4px 10px 4px 10px;
               margin: 0;
               display: flex; align-items: center; gap: 4px;
               border: 1px solid #f59e42;
               cursor: pointer;
               user-select: none;
-              font-weight: 500;
               box-shadow: 0 1px 4px rgba(251,191,36,0.08);
             `;
             chipEl.textContent = chip;
@@ -1259,7 +1273,7 @@ class GmailRewriter {
             chipInput.type = 'text';
             chipInput.placeholder = 'Add feedback...';
             chipInput.style.cssText = `
-              font-size: 15px;
+              font-size: 14px;
               padding: 4px 10px;
               border-radius: 7px;
               border: 1px solid #f59e42;
@@ -1291,7 +1305,7 @@ class GmailRewriter {
             const plusBtn = document.createElement('button');
             plusBtn.type = 'button';
             plusBtn.innerHTML = '<i class="fa-solid fa-plus" style="color:#f59e42;font-size:15px;"></i>';
-            plusBtn.style.cssText = 'background: linear-gradient(135deg, #fbbf24 0%, #f59e42 100%); border: 1px solid #f59e42; border-radius: 7px; padding: 4px 10px; margin: 0; cursor: pointer; display: flex; align-items: center; color: #7c2d12; font-weight: 500;';
+            plusBtn.style.cssText = 'background: linear-gradient(135deg, #fbbf24 0%, #f59e42 100%); border: 1px solid #f59e42; border-radius: 7px; padding: 4px 10px; margin: 0; cursor: pointer; display: flex; align-items: center; color:rgb(255, 255, 255); font-weight: 500;';
             plusBtn.addEventListener('click', () => {
               showInput = true;
               renderChips();
@@ -1338,9 +1352,9 @@ class GmailRewriter {
     const messageEl = document.createElement('div');
     messageEl.className = `native-english-message ${type}`;
     const styles = {
-      success: { icon: '<i class="fa-solid fa-check-circle" style="color:#22c55e;margin-right:6px;"></i>', bg: 'linear-gradient(135deg, #48bb78, #38a169)', shadow: 'rgba(72, 187, 120, 0.4)' },
-      info: { icon: '<i class="fa-solid fa-info-circle" style="color:#6366f1;margin-right:6px;"></i>', bg: 'linear-gradient(135deg, #4299e1, #3182ce)', shadow: 'rgba(66, 153, 225, 0.4)' },
-      error: { icon: '<i class="fa-solid fa-times-circle" style="color:#ef4444;margin-right:6px;"></i>', bg: 'linear-gradient(135deg, #f56565, #e53e3e)', shadow: 'rgba(245, 101, 101, 0.4)' }
+      success: { icon: '<i class="fa-solid fa-check-circle" style="color:#fff;margin-right:6px;"></i>', bg: 'linear-gradient(135deg, #48bb78, #38a169)', shadow: 'rgba(72, 187, 120, 0.4)' },
+      info: { icon: '<i class="fa-solid fa-info-circle" style="color:#fff;margin-right:6px;"></i>', bg: 'linear-gradient(135deg, #4299e1, #3182ce)', shadow: 'rgba(66, 153, 225, 0.4)' },
+      error: { icon: '<i class="fa-solid fa-times-circle" style="color:#fff;margin-right:6px;"></i>', bg: 'linear-gradient(135deg, #f56565, #e53e3e)', shadow: 'rgba(245, 101, 101, 0.4)' }
     };
     const style = styles[type] || styles.error;
     messageEl.innerHTML = `${style.icon}${message}`;

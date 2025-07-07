@@ -10,6 +10,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const googleTranslateApiKeyInput = document.getElementById('googleTranslateApiKey');
     const languageSearchInput = document.getElementById('languageSearch');
     const languageDropdown = document.getElementById('languageDropdown');
+    const inputLanguageSearchInput = document.getElementById('inputLanguageSearch');
+    const inputLanguageDropdown = document.getElementById('inputLanguageDropdown');
+    const detectLanguageBtn = document.getElementById('detectLanguageBtn');
+    let selectedLanguage = null;
+    let selectedInputLanguage = null;
 
     // List of supported languages (name/code pairs)
     const supportedLanguages = [
@@ -134,7 +139,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         { name: 'Yoruba', code: 'yo' },
         { name: 'Zulu', code: 'zu' }
     ];
-    let selectedLanguage = null;
 
     // Load existing settings
     await loadSettings();
@@ -152,7 +156,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function loadSettings() {
         try {
-            const result = await chrome.storage.sync.get(['openaiApiKey', 'englishVariant', 'googleTranslateApiKey', 'targetLanguage']);
+            const result = await chrome.storage.sync.get(['openaiApiKey', 'englishVariant', 'googleTranslateApiKey', 'targetLanguage', 'inputLanguage']);
             // Always leave the input fields empty
             apiKeyInput.value = '';
             googleTranslateApiKeyInput.value = '';
@@ -185,6 +189,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     languageSearchInput.value = lang.name;
                     selectedLanguage = lang;
                 }
+            }
+            if (result.inputLanguage) {
+                if (result.inputLanguage === 'auto') {
+                    inputLanguageSearchInput.value = 'Detect Language';
+                    selectedInputLanguage = 'auto';
+                } else {
+                    const lang = supportedLanguages.find(l => l.code === result.inputLanguage.code || l.name === result.inputLanguage.name);
+                    if (lang) {
+                        inputLanguageSearchInput.value = lang.name;
+                        selectedInputLanguage = lang;
+                    }
+                }
+            } else {
+                inputLanguageSearchInput.value = 'Detect Language';
+                selectedInputLanguage = 'auto';
             }
         } catch (error) {
             // Settings loading failed
@@ -329,6 +348,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function saveGoogleTranslateSettings() {
         const googleTranslateApiKey = googleTranslateApiKeyInput.value.trim();
         const targetLanguage = selectedLanguage;
+        const inputLanguage = selectedInputLanguage;
         let keyToUse = googleTranslateApiKey;
         if (!googleTranslateApiKey) {
             const result = await chrome.storage.sync.get(['googleTranslateApiKey']);
@@ -343,6 +363,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             showStatus('Please select a target language', 'error', 'google');
             return;
         }
+        if (!inputLanguage) {
+            showStatus('Please select an input language or Detect Language', 'error', 'google');
+            return;
+        }
         saveGoogleBtn.textContent = 'Saving...';
         saveGoogleBtn.disabled = true;
         try {
@@ -355,7 +379,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             q: 'Hello world',
-                            target: 'es'
+                            target: 'es',
+                            source: inputLanguage && inputLanguage !== 'auto' ? inputLanguage.code : undefined
                         })
                     });
                 } catch (fetchError) {
@@ -387,9 +412,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             await chrome.storage.sync.set({
                 googleTranslateApiKey: keyToUse,
-                targetLanguage: targetLanguage
+                targetLanguage: targetLanguage,
+                inputLanguage: inputLanguage
             });
-            showDetailedStatus('Google Translate Settings Saved', 'Your Google Translate API key and target language have been saved successfully.', 'success', 'google');
+            showDetailedStatus('Google Translate Settings Saved', 'Your Google Translate API key, input language, and target language have been saved successfully.', 'success', 'google');
             document.getElementById('googleKeyStatus').innerHTML = '<i class="fa-solid fa-check-circle" style="color:#22c55e;"></i> Saved';
             document.getElementById('googleKeyStatus').style.color = '#22c55e';
         } catch (error) {
@@ -556,6 +582,49 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!languageDropdown.contains(e.target) && e.target !== languageSearchInput) {
             languageDropdown.style.display = 'none';
         }
+    });
+
+    // --- Input Language dropdown logic ---
+    function filterInputLanguages(query) {
+        query = query.trim().toLowerCase();
+        if (!query) return supportedLanguages;
+        return supportedLanguages.filter(lang =>
+            lang.name.toLowerCase().includes(query) ||
+            lang.code.toLowerCase().includes(query)
+        );
+    }
+    inputLanguageSearchInput.addEventListener('input', (e) => {
+        const value = e.target.value;
+        const matches = filterInputLanguages(value);
+        if (matches.length > 0) {
+            inputLanguageDropdown.innerHTML = matches.map(lang =>
+                `<div class="language-option" data-code="${lang.code}" style="padding:8px 12px; cursor:pointer;">${lang.name}</div>`
+            ).join('');
+            inputLanguageDropdown.style.display = 'block';
+        } else {
+            inputLanguageDropdown.innerHTML = '<div style="padding:8px 12px; color:#aaa;">No matches found</div>';
+            inputLanguageDropdown.style.display = 'block';
+        }
+    });
+    inputLanguageDropdown.addEventListener('mousedown', (e) => {
+        const option = e.target.closest('.language-option');
+        if (option) {
+            const langName = option.textContent;
+            const langCode = option.getAttribute('data-code');
+            inputLanguageSearchInput.value = langName;
+            selectedInputLanguage = { name: langName, code: langCode };
+            inputLanguageDropdown.style.display = 'none';
+        }
+    });
+    document.addEventListener('mousedown', (e) => {
+        if (!inputLanguageDropdown.contains(e.target) && e.target !== inputLanguageSearchInput) {
+            inputLanguageDropdown.style.display = 'none';
+        }
+    });
+    detectLanguageBtn.addEventListener('click', () => {
+        inputLanguageSearchInput.value = 'Detect Language';
+        selectedInputLanguage = 'auto';
+        inputLanguageDropdown.style.display = 'none';
     });
 
     // Add a class for thin scrollbar styling (CSS will be updated separately)

@@ -1029,10 +1029,10 @@ class GmailRewriter {
     dialog.querySelector('#regenerateBtn').addEventListener('click', async (e) => {
       // Use translated text if available, otherwise use original text
       const currentText = dialog.querySelector('#originalTextArea').value.trim();
-      const feedback = dialog.querySelector('#feedbackTextArea').value.trim();
+      let feedback = dialog.querySelector('#feedbackTextArea').value.trim();
 
       if (!currentText) return this.showMessage('Please enter some text to rewrite.', 'error');
-      if (!feedback) return this.showMessage('Please provide feedback for improvement.', 'error');
+      if (!feedback) feedback = 'rewrite';
 
       const btn = e.target;
       const originalButtonText = btn.innerHTML;
@@ -1251,7 +1251,7 @@ class GmailRewriter {
             chipEl.textContent = chip;
             chipEl.addEventListener('click', (e) => {
               if (e.target !== chipEl) return;
-              feedbackInput.value = chip;
+              feedbackInput.value += chip + ' ';
               feedbackInput.focus();
             });
             const removeBtn = document.createElement('button');
@@ -1350,6 +1350,13 @@ class GmailRewriter {
       });
       inputLangDropdown.value = settings.inputLanguage && settings.inputLanguage.code ? settings.inputLanguage.code : 'auto';
       document.getElementById('inputLangDropdownContainer').appendChild(inputLangDropdown);
+      // --- Add change event for input language ---
+      inputLangDropdown.addEventListener('change', async (e) => {
+        const code = e.target.value;
+        let langObj = code === 'auto' ? 'auto' : supportedLanguages.find(l => l.code === code);
+        await chrome.storage.sync.set({ inputLanguage: langObj });
+        // Optionally, trigger preview update here if needed
+      });
       // --- Target Language Dropdown ---
       const targetLangDropdown = document.createElement('select');
       targetLangDropdown.className = 'gorgeous-dropdown';
@@ -1362,6 +1369,13 @@ class GmailRewriter {
       });
       targetLangDropdown.value = settings.targetLanguage && settings.targetLanguage.code ? settings.targetLanguage.code : 'en';
       document.getElementById('targetLangDropdownContainer').appendChild(targetLangDropdown);
+      // --- Add change event for target language ---
+      targetLangDropdown.addEventListener('change', async (e) => {
+        const code = e.target.value;
+        let langObj = supportedLanguages.find(l => l.code === code);
+        await chrome.storage.sync.set({ targetLanguage: langObj });
+        // Optionally, trigger preview update here if needed
+      });
       // --- English Variant Combo Box in Preview Dialog ---
       const variantInput = document.createElement('input');
       variantInput.type = 'text';

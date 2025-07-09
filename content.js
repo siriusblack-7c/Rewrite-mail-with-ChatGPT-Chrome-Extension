@@ -145,7 +145,7 @@ class GmailRewriter {
         return `Variant Model: ${englishVariant} ; You are a professional writing assistant. You have to rewrite the text into English. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary. Use this model's spelling, terminology, phrasing to sound like a native speaker.`;
       }
     } catch (error) {
-      console.error('Error initializing variant prompts:', error);
+      // console.error('Error initializing variant prompts:', error);
       // Return a default prompt as a fallback
       return `You are a professional writing assistant. You have to rewrite the text into English. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary. Use US English spelling, terminology, phrasing to sound like a native speaker.`;
     }
@@ -278,9 +278,7 @@ class GmailRewriter {
   async makeApiRequestWithRetry(requestBody, maxRetries = 3) {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        if (this.rateLimitResetTime && Date.now() < this.rateLimitResetTime) {
-          await this.waitForRateLimit();
-        }
+        await this.waitForRateLimit();
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -293,42 +291,34 @@ class GmailRewriter {
 
         this.updateRateLimitInfo(response);
 
-        if (!response.ok) {
-          if (response.status === 401) throw new Error('API_KEY_INVALID');
-          if (response.status === 429) {
-            // This is a rate limit error
-            if (attempt < maxRetries) {
-              const backoffTime = await this.exponentialBackoff(attempt);
-              this.rateLimitResetTime = Date.now() + backoffTime;
-              // console.warn(`Rate limited. Retrying in ${backoffTime}ms...`);
-              continue; // Retry the request
-            }
-            throw new Error('RATE_LIMITED');
-          }
-          if (response.status === 402 || response.status.toString().startsWith('5')) {
-            await this.handleCreditsAndBillingError();
-            throw new Error('BILLING_ISSUE');
-          }
-          throw new Error(`API Error: ${response.statusText}`);
+        if (response.ok) {
+          return await response.json();
         }
-        return await response.json();
-      } catch (error) {
-        const rewrittenTextArea = document.querySelector('#rewrittenTextArea');
-        if (rewrittenTextArea) {
-          rewrittenTextArea.value = 'Some error occurred. Please try again.';
-        }
-        if (error.name === 'TypeError' || error.message.includes('fetch')) {
-          if (attempt === maxRetries) {
-            this.showMessage('Network error. Please check your connection and try again.', 'error');
-            throw error;
-          }
-          await new Promise(res => setTimeout(res, 1000 * (attempt + 1))); // Simple backoff for network errors
+
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || response.statusText;
+
+        if ((response.status === 429 || response.status >= 500) && attempt < maxRetries) {
+          const backoffTime = await this.exponentialBackoff(attempt);
+          // console.warn(`API error ${response.status}. Retrying in ${Math.round(backoffTime)}ms...`);
           continue;
+        }
+
+        throw new Error(`${response.status}: ${errorMessage}`);
+
+      } catch (error) {
+        if (error.name === 'TypeError' || !error.message.includes(':')) {
+          if (attempt < maxRetries) {
+            const backoffTime = await this.exponentialBackoff(attempt);
+            // console.warn(`Network error. Retrying in ${Math.round(backoffTime)}ms...`);
+            continue;
+          } else {
+            throw new Error(`Network: Failed to connect to API after ${maxRetries + 1} attempts.`);
+          }
         }
         throw error;
       }
     }
-    throw new Error('API request failed after multiple retries.');
   }
 
   updateRateLimitInfo(response) {
@@ -907,33 +897,50 @@ class GmailRewriter {
       const { rewrittenText, messages, signature, hasSignature } = await this.rewriteWithChatGPT(originalText);
       this.showPreviewDialog(composeWindow, originalText, rewrittenText, composeBody, isUserInputOnly, originalHTML, messages, signature, hasSignature);
     } catch (error) {
-      this.handleRewriteError(error);
+      this.handleApiError(error);
     } finally {
       button.innerHTML = originalButtonText;
       button.disabled = false;
     }
   }
 
-  handleRewriteError(error) {
+  handleApiError(error, textArea) {
+    const [statusStr, ...messageParts] = error.message.split(':');
+    const message = messageParts.join(':').trim();
+    const status = parseInt(statusStr, 10);
 
-    if (error.message.includes('401') || error.message.includes('403')) {
-      this.showMessage('Invalid API key. Please check your OpenAI API key in the extension popup.', 'error');
-    } else if (error.message.includes('429')) {
-      const message = error.message.includes('after retries')
-        ? 'OpenAI rate limit exceeded. Please wait a few minutes before trying again.'
-        : 'Rate limit exceeded. The request is being retried automatically...';
-      this.showMessage(message, error.message.includes('after retries') ? 'error' : 'info');
-    } else if (/insufficient_quota|quota|exceeded|billing/.test(error.message)) {
-      this.handleCreditsAndBillingError();
-      return;
-    } else if (error.message.includes('Network error') || error.message.includes('fetch')) {
-      this.showMessage('Network error. Please check your internet connection and try again.', 'error');
-    } else if (error.message.includes('Server error')) {
-      this.showMessage('OpenAI server error. Please try again in a few moments.', 'error');
-    } else if (error.message.includes('400')) {
-      this.showMessage('Request error. The text might be too long or contain invalid content.', 'error');
-    } else {
-      this.showMessage('Failed to rewrite email. Please try again.', 'error');
+    if (textArea) {
+      textArea.value = '';
+      textArea.placeholder = 'An error occurred. Please try again.';
+    }
+
+    switch (status) {
+      case 400:
+        this.showMessage('Bad Request: The request was malformed, possibly too long.', 'error');
+        break;
+      case 401:
+        this.showMessage('Authentication Error: Invalid API key. Please check your settings.', 'error');
+        break;
+      case 402:
+        this.showMessage('Billing Issue: Please check your OpenAI account payment method.', 'error');
+        this.handleCreditsAndBillingError();
+        break;
+      case 429:
+        this.showMessage('Rate Limit Exceeded: Too many requests. Please wait a moment.', 'error');
+        break;
+      case 500:
+      case 502:
+      case 503:
+      case 504:
+        this.showMessage('OpenAI Server Error: The server is unavailable. Please try again later.', 'error');
+        break;
+      default:
+        if (statusStr === 'Network') {
+          this.showMessage('Network Error: Could not connect. Check your internet connection.', 'error');
+        } else {
+          this.showMessage(`Error: ${message || 'An unknown error occurred.'}`, 'error');
+        }
+        break;
     }
   }
 
@@ -1203,12 +1210,10 @@ class GmailRewriter {
     });
 
     dialog.querySelector('#regenerateBtn').addEventListener('click', async (e) => {
-      // Use translated text if available, otherwise use original text
-      const currentText = dialog.querySelector('#originalTextArea').value.trim();
       let feedback = dialog.querySelector('#feedbackTextArea').value.trim();
-
-      if (!currentText) return this.showMessage('Please enter some text to rewrite.', 'error');
-      if (!feedback) feedback = 'Rewrite the email text.';
+      if (!feedback) {
+        feedback = 'Rewrite the email text, paying close attention to the original request.';
+      }
 
       const btn = e.target.closest('button');
       const originalButtonText = btn.innerHTML;
@@ -1246,7 +1251,7 @@ class GmailRewriter {
       } catch (error) {
         // If there's an error, pop the last user message to allow retrying
         conversationHistory.pop();
-        this.handleRegenerateError(error);
+        this.handleApiError(error, rewrittenTextArea);
         rewrittenTextArea.value = previousRewrittenText; // Restore previous text
       } finally {
         btn.innerHTML = originalButtonText;
@@ -1633,26 +1638,6 @@ class GmailRewriter {
         variantContainer.appendChild(variantDropdown);
       }
     }, 200);
-  }
-
-  handleRegenerateError(error) {
-
-    if (error.message.includes('401') || error.message.includes('403')) {
-      this.showMessage('Invalid API key. Please check your OpenAI API key.', 'error');
-    } else if (error.message.includes('429')) {
-      const message = error.message.includes('after retries')
-        ? 'Rate limit exceeded after retries. Please wait several minutes before trying again.'
-        : 'Rate limit exceeded. Retrying automatically...';
-      this.showMessage(message, error.message.includes('after retries') ? 'error' : 'info');
-    } else if (/insufficient_quota|quota|exceeded|billing/.test(error.message)) {
-      this.handleCreditsAndBillingError();
-    } else if (error.message.includes('Network error')) {
-      this.showMessage('Network error. Please check your connection.', 'error');
-    } else if (error.message.includes('Server error')) {
-      this.showMessage('OpenAI server error. Please try again later.', 'error');
-    } else {
-      this.showMessage('Failed to regenerate text. Please try again.', 'error');
-    }
   }
 
   showMessage(message, type) {

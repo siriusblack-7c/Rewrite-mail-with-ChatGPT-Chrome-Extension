@@ -141,13 +141,61 @@ document.addEventListener('DOMContentLoaded', async () => {
         { name: 'Zulu', code: 'zu' }
     ];
 
-    const englishVariants = [
+    const languageVariants = [
+        // --- English Variants ---
         { code: 'US', name: 'United States (American English)' },
         { code: 'UK', name: 'United Kingdom (British English)' },
         { code: 'AU', name: 'Australia (Australian English)' },
         { code: 'CA', name: 'Canada (Canadian English)' },
         { code: 'NZ', name: 'New Zealand (New Zealand English)' },
-        { code: 'ZA', name: 'South Africa (South African English)' }
+        { code: 'ZA', name: 'South Africa (South African English)' },
+        { code: 'IE', name: 'Ireland (Irish English)' },
+        { code: 'IN', name: 'India (Indian English)' },
+        { code: 'SG', name: 'Singapore (Singaporean English)' },
+        { code: 'SCO', name: 'Scotland (Scottish English)' },
+        { code: 'NG', name: 'Nigeria (Nigerian English)' },
+        { code: 'PH', name: 'Philippines (Philippine English)' },
+
+        // --- Spanish Variants ---
+        { code: 'ES-ES', name: 'Spain (Castilian Spanish)' },
+        { code: 'ES-MX', name: 'Mexico (Mexican Spanish)' },
+        { code: 'ES-AR', name: 'Argentina (Argentinian Spanish)' },
+        { code: 'ES-CO', name: 'Colombia (Colombian Spanish)' },
+        { code: 'ES-LATAM', name: 'Latin America (General Spanish)' },
+
+        // --- French Variants ---
+        { code: 'FR-FR', name: 'France (European French)' },
+        { code: 'FR-CA', name: 'Canada (Canadian French)' },
+        { code: 'FR-AF', name: 'Africa (African French)' },
+
+        // --- Portuguese Variants ---
+        { code: 'PT-PT', name: 'Portugal (European Portuguese)' },
+        { code: 'PT-BR', name: 'Brazil (Brazilian Portuguese)' },
+
+        // --- German Variants ---
+        { code: 'DE-DE', name: 'Germany (Standard German)' },
+        { code: 'DE-AT', name: 'Austria (Austrian German)' },
+        { code: 'DE-CH', name: 'Switzerland (Swiss German)' },
+
+        // --- Chinese Variants ---
+        { code: 'ZH-CN', name: 'Mainland China (Mandarin, Simplified)' },
+        { code: 'ZH-HK', name: 'Hong Kong (Cantonese, Traditional)' },
+        { code: 'ZH-TW', name: 'Taiwan (Taiwanese Mandarin, Traditional)' },
+
+        // --- Arabic Variants ---
+        { code: 'AR-MSA', name: 'Modern Standard Arabic' },
+        { code: 'AR-EG', name: 'Egypt (Egyptian Arabic)' },
+        { code: 'AR-LEV', name: 'Levant (Levantine Arabic)' },
+
+        // --- Accented English ---
+        { code: 'EN-ACCENT-FR', name: 'English (French Accent)' },
+        { code: 'EN-ACCENT-DE', name: 'English (German Accent)' },
+        { code: 'EN-ACCENT-ES', name: 'English (Spanish Accent)' },
+        { code: 'EN-ACCENT-IT', name: 'English (Italian Accent)' },
+        { code: 'EN-ACCENT-RU', name: 'English (Russian Accent)' },
+        { code: 'EN-ACCENT-JP', name: 'English (Japanese Accent)' },
+        { code: 'EN-ACCENT-KR', name: 'English (Korean Accent)' },
+        { code: 'EN-ACCENT-CN', name: 'English (Chinese Accent)' }
     ];
 
     // Load existing settings
@@ -166,7 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function loadSettings() {
         try {
-            const result = await chrome.storage.sync.get(['openaiApiKey', 'englishVariant', 'googleTranslateApiKey', 'targetLanguage', 'inputLanguage']);
+            const result = await chrome.storage.sync.get(['openaiApiKey', 'languageVariant', 'googleTranslateApiKey', 'targetLanguage', 'inputLanguage']);
             // Always leave the input fields empty
             apiKeyInput.value = '';
             googleTranslateApiKeyInput.value = '';
@@ -188,10 +236,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 googleKeyStatus.innerHTML = '<i class="fa-solid fa-times-circle" style="color:#ef4444;"></i> Not set';
                 googleKeyStatus.style.color = '#ef4444';
             }
-            if (result.englishVariant) {
+            if (result.languageVariant) {
                 // If it's a known code, show the name; else, show the custom value
-                const variant = englishVariants.find(v => v.code === result.englishVariant || v.name === result.englishVariant);
-                englishVariantInput.value = variant ? variant.name : result.englishVariant;
+                const variant = languageVariants.find(v => v.code === result.languageVariant || v.name === result.languageVariant);
+                englishVariantInput.value = variant ? variant.name : result.languageVariant;
             } else {
                 englishVariantInput.value = '';
             }
@@ -249,7 +297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         if (!englishVariant) {
-            showStatus('Please select an English variant', 'error', 'openai');
+            showStatus('Please select a language variant', 'error', 'openai');
             return;
         }
         saveOpenAIBtn.textContent = 'Saving...';
@@ -318,9 +366,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             await chrome.storage.sync.set({
                 openaiApiKey: keyToUse,
-                englishVariant: englishVariant
+                languageVariant: englishVariant
             });
-            showDetailedStatus('OpenAI Settings Saved', 'Your OpenAI API key and English variant have been saved successfully.', 'success', 'openai');
+            showDetailedStatus('OpenAI Settings Saved', 'Your OpenAI API key and language variant have been saved successfully.', 'success', 'openai');
             document.getElementById('openaiKeyStatus').innerHTML = '<i class="fa-solid fa-check-circle" style="color:#22c55e;"></i> Saved';
             document.getElementById('openaiKeyStatus').style.color = '#22c55e';
             chrome.tabs && chrome.tabs.query && chrome.tabs.sendMessage && chrome.tabs.query({}, function (tabs) {
@@ -639,18 +687,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         inputLanguageDropdown.style.display = 'none';
     });
 
-    // --- English Variant Combo Box Logic ---
-    function filterEnglishVariants(query) {
+    // --- Language Variant Combo Box Logic ---
+    function filterLanguageVariants(query) {
         query = query.trim().toLowerCase();
-        if (!query) return englishVariants;
-        return englishVariants.filter(v =>
+        if (!query) return languageVariants;
+        return languageVariants.filter(v =>
             v.name.toLowerCase().includes(query) ||
             v.code.toLowerCase().includes(query)
         );
     }
     englishVariantInput.addEventListener('input', (e) => {
         const value = e.target.value;
-        const matches = filterEnglishVariants(value);
+        const matches = filterLanguageVariants(value);
         if (matches.length > 0) {
             englishVariantDropdown.innerHTML = matches.map(v =>
                 `<div class="language-option" data-code="${v.code}" style="padding:8px 12px; cursor:pointer;">${v.name}</div>`
@@ -668,8 +716,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             englishVariantInput.value = variantName;
             englishVariantDropdown.style.display = 'none';
             // Save as code if known, else as name
-            const variant = englishVariants.find(v => v.name === variantName);
-            chrome.storage.sync.set({ englishVariant: variant ? variant.code : variantName });
+            const variant = languageVariants.find(v => v.name === variantName);
+            chrome.storage.sync.set({ languageVariant: variant ? variant.code : variantName });
         }
     });
     document.addEventListener('mousedown', (e) => {
@@ -681,8 +729,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     englishVariantInput.addEventListener('blur', () => {
         const value = englishVariantInput.value.trim();
         if (value) {
-            const variant = englishVariants.find(v => v.name === value || v.code === value);
-            chrome.storage.sync.set({ englishVariant: variant ? variant.code : value });
+            const variant = languageVariants.find(v => v.name === value || v.code === value);
+            chrome.storage.sync.set({ languageVariant: variant ? variant.code : value });
         }
     });
 

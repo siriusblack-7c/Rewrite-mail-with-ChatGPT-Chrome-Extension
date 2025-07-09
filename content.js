@@ -37,19 +37,17 @@ class GmailRewriter {
   }
 
   async init() {
-    const result = await chrome.storage.sync.get(['openaiApiKey', 'englishVariant']);
+    const result = await chrome.storage.sync.get(['openaiApiKey', 'languageVariant']);
     this.apiKey = result.openaiApiKey;
-    this.variant = result.englishVariant || 'US';
+    this.variant = result.languageVariant || 'US';
     this.checkForConflicts();
     this.waitForGmail();
   }
 
   async initializeVariantPrompts() {
-    const result = await chrome.storage.sync.get(['targetLanguage', 'englishVariant']);
+    const result = await chrome.storage.sync.get(['targetLanguage', 'languageVariant']);
     const targetLanguage = result.targetLanguage;
-    const englishVariant = result.englishVariant || 'US';
-
-    console.log(targetLanguage, 'targetlang', this.variant);
+    const englishVariant = result.languageVariant || 'US';
 
     // If target language is set and it's not English, rewrite to that language
     if (targetLanguage && targetLanguage.code !== 'en') {
@@ -142,8 +140,8 @@ class GmailRewriter {
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === 'sync') {
         if (changes.openaiApiKey) this.apiKey = changes.openaiApiKey.newValue;
-        if (changes.englishVariant) {
-          this.variant = changes.englishVariant.newValue || 'US';
+        if (changes.languageVariant) {
+          this.variant = changes.languageVariant.newValue || 'US';
           this.refreshRewriteButtons();
         }
       }
@@ -179,15 +177,17 @@ class GmailRewriter {
   }
 
   async exponentialBackoff(attempt) {
-    const delay = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 1000, 30000);
-    return new Promise(resolve => setTimeout(resolve, delay));
+    const backoffTime = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+    await new Promise(res => setTimeout(res, backoffTime));
+    return backoffTime;
   }
 
   async makeApiRequestWithRetry(requestBody, maxRetries = 3) {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        await this.waitForRateLimit();
-        this.rateLimitInfo.requestsInWindow++;
+        if (this.rateLimitResetTime && Date.now() < this.rateLimitResetTime) {
+          await this.waitForRateLimit();
+        }
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -200,56 +200,42 @@ class GmailRewriter {
 
         this.updateRateLimitInfo(response);
 
-        if (response.ok) return await response.json();
-
-        if (response.status === 429) {
-          const errorData = await response.json();
-          const retryAfter = response.headers.get('retry-after');
-
-          this.rateLimitInfo.retryAfter = retryAfter
-            ? Date.now() + (parseInt(retryAfter) * 1000)
-            : Date.now() + (Math.pow(2, attempt) * 1000);
-
-          if (attempt === maxRetries) {
-            throw new Error(`429: ${errorData.error?.message || 'Rate limit exceeded after retries'}`);
+        if (!response.ok) {
+          if (response.status === 401) throw new Error('API_KEY_INVALID');
+          if (response.status === 429) {
+            // This is a rate limit error
+            if (attempt < maxRetries) {
+              const backoffTime = await this.exponentialBackoff(attempt);
+              this.rateLimitResetTime = Date.now() + backoffTime;
+              // console.warn(`Rate limited. Retrying in ${backoffTime}ms...`);
+              continue; // Retry the request
+            }
+            throw new Error('RATE_LIMITED');
           }
-
-          await this.exponentialBackoff(attempt);
-          continue;
-        }
-
-        // Handle other errors
-        if (response.status === 401 || response.status === 403) {
-          throw new Error(`${response.status}: Invalid API key`);
-        }
-
-        if (response.status === 400) {
-          const errorData = await response.json();
-          throw new Error(`400: ${errorData.error?.message || 'Bad request'}`);
-        }
-
-        if (response.status >= 500) {
-          if (attempt === maxRetries) {
-            throw new Error(`${response.status}: Server error after retries`);
+          if (response.status === 402 || response.status.toString().startsWith('5')) {
+            await this.handleCreditsAndBillingError();
+            throw new Error('BILLING_ISSUE');
           }
-          await this.exponentialBackoff(attempt);
-          continue;
+          throw new Error(`API Error: ${response.statusText}`);
         }
-
-        const errorData = await response.json();
-        throw new Error(`${response.status}: ${errorData.error?.message || 'API request failed'}`);
-
+        return await response.json();
       } catch (error) {
+        const rewrittenTextArea = document.querySelector('#rewrittenTextArea');
+        if (rewrittenTextArea) {
+          rewrittenTextArea.value = 'Some error occurred. Please try again.';
+        }
         if (error.name === 'TypeError' || error.message.includes('fetch')) {
           if (attempt === maxRetries) {
-            throw new Error(`Network error after ${maxRetries + 1} attempts: ${error.message}`);
+            this.showMessage('Network error. Please check your connection and try again.', 'error');
+            throw error;
           }
-          await this.exponentialBackoff(attempt);
+          await new Promise(res => setTimeout(res, 1000 * (attempt + 1))); // Simple backoff for network errors
           continue;
         }
         throw error;
       }
     }
+    throw new Error('API request failed after multiple retries.');
   }
 
   updateRateLimitInfo(response) {
@@ -665,7 +651,16 @@ class GmailRewriter {
 
     const style = document.createElement('style');
     style.id = 'native-english-button-styles';
-    style.textContent = `.native-english-rewrite-btn{display:inline-block!important;margin-left:12px!important;user-select:none!important}.native-english-rewrite-btn .rewrite-button{display:inline-flex!important;align-items:center!important;gap:8px!important;padding:8px 10px!important;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)!important;color:white!important;border:none!important;border-radius:20px!important;font-size:12px!important;font-weight:600!important;cursor:pointer!important;transition:all .3s ease!important;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif!important;box-shadow:0 4px 15px rgba(102,126,234,.3)!important;position:relative!important;overflow:hidden!important;user-select:none!important;outline:none!important}.native-english-rewrite-btn .rewrite-button:hover{background:linear-gradient(135deg,#5a67d8 0%,#6b46c1 100%)!important;box-shadow:0 8px 25px rgba(102,126,234,.4)!important;transform:translateY(-2px)!important}.native-english-rewrite-btn .rewrite-button:active{transform:translateY(0px)!important}.native-english-rewrite-btn .rewrite-button:disabled{background:linear-gradient(135deg,#a0aec0,#cbd5e0)!important;cursor:not-allowed!important;transform:none!important;box-shadow:none!important}.native-english-rewrite-btn .rewrite-button svg{width:16px!important;height:16px!important;fill:currentColor!important}.spinning{animation:spin 1s linear infinite!important}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}`;
+    style.textContent = `
+    .native-english-rewrite-btn{display:inline-block!important;margin-left:12px!important;user-select:none!important}.native-english-rewrite-btn .rewrite-button{display:inline-flex!important;align-items:center!important;gap:8px!important;padding:8px 10px!important;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)!important;color:white!important;border:none!important;border-radius:20px!important;font-size:12px!important;font-weight:600!important;cursor:pointer!important;transition:all .3s ease!important;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif!important;box-shadow:0 4px 15px rgba(102,126,234,.3)!important;position:relative!important;overflow:hidden!important;user-select:none!important}.native-english-rewrite-btn .rewrite-button:hover{transform:translateY(-2px)!important;box-shadow:0 6px 20px rgba(102,126,234,.4)!important}.native-english-rewrite-btn .rewrite-button:active{transform:translateY(0)!important}.native-english-rewrite-btn .rewrite-button:disabled{background:linear-gradient(135deg,#a0aec0,#cbd5e0)!important;cursor:not-allowed!important}.native-english-rewrite-btn .rewrite-button-icon{width:16px;height:16px;animation:icon-spin .6s linear infinite;display:none}.native-english-rewrite-btn .rewrite-button.loading .rewrite-button-icon{display:inline-block!important}.native-english-rewrite-btn .rewrite-button.loading .rewrite-button-text{display:none!important}@keyframes icon-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+    .gorgeous-dropdown-input { padding:5px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;background:white;color:rgb(34, 170, 63);font-weight:600;outline:none;min-width:110px;max-width:170px; transition: all 0.2s ease; }
+    .gorgeous-dropdown-input:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+    .gorgeous-dropdown-options { display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #e2e8f0; border-radius:8px; max-height:180px; overflow-y:auto; z-index:1001; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+    .gorgeous-dropdown-option { padding:8px 12px; cursor:pointer; font-size:13px; color: #4a5568; }
+    .gorgeous-dropdown-option:hover { background-color: #f0f2f5; }
+    .gorgeous-dropdown-option-none { padding:8px 12px; color:#aaa; }
+    #variantDropdownContainer { position: relative; }
+    `;
     document.head.appendChild(style);
   }
 
@@ -894,12 +889,13 @@ class GmailRewriter {
 
   async rewriteWithFeedback(text, feedback) {
     const { mainContent, signature, hasSignature } = this.splitEmailContent(text);
+
     const rewrittenTextArea = document.querySelector('#rewrittenTextArea');
-    await this.doTranslate();
-    // Update UI to show rewriting in progress
     if (rewrittenTextArea) {
       rewrittenTextArea.value = 'Rewriting...';
     }
+
+    await this.doTranslate();
 
     const requestBody = {
       model: 'gpt-4o-mini',
@@ -966,69 +962,95 @@ class GmailRewriter {
     const translateBtn = dialog.querySelector('#translateBtn');
     const originalTextArea = dialog.querySelector('#originalTextArea');
     const translatedTextArea = dialog.querySelector('#translatedTextArea');
-    // Disable translate button until original text is available
-    if (translateBtn) {
-      translateBtn.disabled = !originalTextArea.value.trim();
-    }
-    // Preprocess: preserve line breaks and paragraphs
+
+    if (!translateBtn || !originalTextArea || !translatedTextArea) return;
+
     let textToTranslate = originalTextArea.value.trim();
-    // Replace double newlines with [[PARA]], single newlines with [[BR]]
-    textToTranslate = textToTranslate.replace(/\n\n/g, '[[PARA]]').replace(/\n/g, '[[BR]]');
     if (!textToTranslate) {
-      this.showMessage('No rewritten text to translate.', 'error');
+      this.showMessage('No text to translate.', 'error');
       return;
     }
-    translatedTextArea.value = 'Translating...';
+
+    textToTranslate = textToTranslate.replace(/\n\n/g, '[[PARA]]').replace(/\n/g, '\n');
     const originalBtnHTML = translateBtn.innerHTML;
     translateBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="spinning"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg> Translating...';
     translateBtn.disabled = true;
+    translatedTextArea.value = 'Translating...';
+
     try {
       const settings = await new Promise(resolve => {
         chrome.storage.sync.get(['googleTranslateApiKey', 'targetLanguage', 'inputLanguage'], resolve);
       });
-      const apiKey = settings.googleTranslateApiKey;
-      const targetLanguage = settings.targetLanguage && settings.targetLanguage.code;
-      const inputLanguage = settings.inputLanguage === 'auto' ? undefined : (settings.inputLanguage && settings.inputLanguage.code ? settings.inputLanguage.code : undefined);
-      if (!apiKey || !targetLanguage) {
-        translatedTextArea.value = '';
-        this.showMessage('Google Translate API key or target language not set. Please check extension settings.', 'error');
-        translateBtn.innerHTML = originalBtnHTML;
-        translateBtn.disabled = false;
-        return;
+
+      const { googleTranslateApiKey, targetLanguage, inputLanguage } = settings;
+
+      if (!googleTranslateApiKey || !targetLanguage?.code) {
+        throw new Error('Google Translate API key or target language not set.');
       }
-      const requestBody = {
-        q: textToTranslate,
-        target: targetLanguage
-      };
-      if (inputLanguage) {
-        requestBody.source = inputLanguage;
+
+      const requestBody = { q: textToTranslate, target: targetLanguage.code };
+      if (inputLanguage && inputLanguage !== 'auto') {
+        requestBody.source = inputLanguage.code;
       }
-      const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      });
-      const data = await response.json();
-      if (data && data.data && data.data.translations && data.data.translations[0]) {
-        // Restore formatting markers
-        let translated = data.data.translations[0].translatedText;
-        translated = translated.replace(/\[\[PARA\]\]/g, '\n\n').replace(/\[\[BR\]\]/g, '\n');
-        translatedTextArea.value = translated;
-        this.showMessage('Translation complete!', 'success');
-      } else if (data.error && data.error.message) {
-        translatedTextArea.value = '';
-        this.showMessage('Translation error: ' + data.error.message, 'error');
-      } else {
-        translatedTextArea.value = '';
-        this.showMessage('Unknown translation error.', 'error');
+
+      const maxRetries = 3;
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(googleTranslateApiKey)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data?.data?.translations?.[0]) {
+              let translated = data.data.translations[0].translatedText;
+              translated = translated.replace(/\[\[PARA\]\]/g, '\n\n').replace(/\n/g, '\n');
+              translated = this.decodeHtmlEntities(translated);
+              translatedTextArea.value = translated;
+              this.showMessage('Translation complete!', 'success');
+              return;
+            }
+            throw new Error('Invalid API response from Google Translate.');
+          }
+
+          if (response.status === 429 || response.status >= 500) {
+            if (attempt === maxRetries) {
+              throw new Error(`Google API error ${response.status} after all retries.`);
+            }
+            await this.exponentialBackoff(attempt);
+            continue;
+          }
+
+          const errorData = await response.json();
+          throw new Error(errorData.error?.message || `HTTP error ${response.status}`);
+
+        } catch (error) {
+          if (attempt === maxRetries) throw error;
+          if (error.name === 'TypeError') { // Network error
+            await this.exponentialBackoff(attempt);
+          } else if (error.message.includes('Google API error')) {
+            // Already handled in the retry logic above, just continue
+          } else {
+            throw error; // Don't retry on other errors
+          }
+        }
       }
-    } catch (err) {
+    } catch (error) {
       translatedTextArea.value = '';
       this.showMessage('Failed to translate. Please check your API key and network.', 'error');
     } finally {
       translateBtn.innerHTML = originalBtnHTML;
       translateBtn.disabled = false;
     }
+  }
+
+  // Decode HTML entities (like &#39; to apostrophe)
+  decodeHtmlEntities(text) {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = text;
+    return textarea.value;
   }
   // Optimized preview dialog
   showPreviewDialog(composeWindow, originalText, rewrittenText, composeBody, isUserInputOnly = false, originalHTML = null) {
@@ -1077,7 +1099,7 @@ class GmailRewriter {
           <textarea id="feedbackTextArea" class="gorgeous-feedback-area" placeholder="e.g., 'Make it more brief', 'Add more details', 'Make it more formal', 'Use simpler language'..."></textarea>
           <button id="regenerateBtn" class="gorgeous-regenerate-btn"><i class="fa-solid fa-arrows-rotate" style="color:rgb(255, 255, 255);margin-right:4px;"></i> Regenerate</button>
         </div>
-        <div id="feedbackChipsRow" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+        <div id="feedbackChipsRow" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; max-height: 36px; overflow-y: auto;"></div>
       </div>
       <div class="gorgeous-dialog-footer">
         <button id="cancelBtn" class="gorgeous-footer-btn gorgeous-cancel-btn"><i class="fa-solid fa-times" style="color:#ef4444;margin-right:6px;"></i> Cancel</button>
@@ -1264,7 +1286,11 @@ class GmailRewriter {
             chipEl.textContent = chip;
             chipEl.addEventListener('click', (e) => {
               if (e.target !== chipEl) return;
-              feedbackInput.value += chip + ' ';
+              if (feedbackInput.value.trim()) {
+                feedbackInput.value += 'and ' + chip + ' ';
+              } else {
+                feedbackInput.value += chip + ' ';
+              }
               feedbackInput.focus();
             });
             const removeBtn = document.createElement('button');
@@ -1345,7 +1371,7 @@ class GmailRewriter {
     setTimeout(async () => {
       // Get current settings
       const settings = await new Promise(resolve => {
-        chrome.storage.sync.get(['inputLanguage', 'targetLanguage', 'englishVariant'], resolve);
+        chrome.storage.sync.get(['inputLanguage', 'targetLanguage', 'languageVariant'], resolve);
       });
       // --- Input Language Dropdown ---
       const inputLangDropdown = document.createElement('select');
@@ -1389,73 +1415,93 @@ class GmailRewriter {
         await chrome.storage.sync.set({ targetLanguage: langObj });
         // Optionally, trigger preview update here if needed
       });
-      // --- English Variant Combo Box in Preview Dialog ---
+      // --- Language Variant Combo Box in Preview Dialog ---
       const variantInput = document.createElement('input');
       variantInput.type = 'text';
       variantInput.id = 'variantInput';
-      variantInput.placeholder = 'Type or select English variant...';
-      variantInput.className = 'gorgeous-dropdown';
-      variantInput.style.cssText = 'padding:5px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:13px;background:white;color:#22c55e;font-weight:600;outline:none;min-width:110px; max-width:170px;';
+      variantInput.placeholder = 'Type or select variant...';
+      variantInput.className = 'gorgeous-dropdown-input';
+      variantInput.autocomplete = 'off';
+
       const variantDropdown = document.createElement('div');
-      variantDropdown.id = 'variantDropdown';
-      variantDropdown.style.cssText = 'display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #e2e8f0; border-radius:0 0 12px 12px; max-height:180px; overflow-y:auto; z-index:10; font-size:13px; font-weight:600; color: #22c55e;';
-      // Helper for filtering
-      function filterEnglishVariants(query) {
+      variantDropdown.className = 'gorgeous-dropdown-options';
+
+      // Filter function for language variants
+      function filterLanguageVariants(query) {
         query = query.trim().toLowerCase();
-        if (!query) return englishVariants;
-        return englishVariants.filter(v =>
+        if (!query) return languageVariants;
+        return languageVariants.filter(v =>
           v.name.toLowerCase().includes(query) ||
           v.code.toLowerCase().includes(query)
         );
       }
-      // Set initial value
-      variantInput.value = settings.englishVariant && englishVariants.find(v => v.code === settings.englishVariant) ? englishVariants.find(v => v.code === settings.englishVariant).name : (settings.englishVariant || '');
-      // Attach to container
-      const variantContainer = document.getElementById('variantDropdownContainer');
-      variantContainer.innerHTML = '';
-      variantContainer.style.position = 'relative';
-      variantContainer.appendChild(variantInput);
-      variantContainer.appendChild(variantDropdown);
-      // Show dropdown on input
-      variantInput.addEventListener('input', (e) => {
-        const value = e.target.value;
-        const matches = filterEnglishVariants(value);
-        if (matches.length > 0) {
-          variantDropdown.innerHTML = matches.map(v =>
-            `<div class="language-option" data-code="${v.code}" style="padding:8px 12px; cursor:pointer;">${v.name}</div>`
+
+      // Show/hide dropdown based on focus
+      variantInput.addEventListener('focus', () => {
+        variantDropdown.style.display = 'block';
+        // Pre-populate with all options if input is empty
+        if (!variantInput.value.trim()) {
+          const allOptions = languageVariants.map(v =>
+            `<div class="gorgeous-dropdown-option" data-code="${v.code}">${v.name}</div>`
           ).join('');
-          variantDropdown.style.display = 'block';
-        } else {
-          variantDropdown.innerHTML = '<div style="padding:8px 12px; color:#aaa;">No matches found</div>';
-          variantDropdown.style.display = 'block';
+          variantDropdown.innerHTML = allOptions;
         }
       });
-      // Select from dropdown
+
+      // Filter as user types
+      variantInput.addEventListener('input', () => {
+        const value = variantInput.value;
+        const matches = filterLanguageVariants(value);
+        if (matches.length > 0) {
+          variantDropdown.innerHTML = matches.map(v =>
+            `<div class="gorgeous-dropdown-option" data-code="${v.code}">${v.name}</div>`
+          ).join('');
+        } else {
+          variantDropdown.innerHTML = '<div class="gorgeous-dropdown-option-none">No matches found</div>';
+        }
+        variantDropdown.style.display = 'block';
+      });
+
+      // Handle selection
       variantDropdown.addEventListener('mousedown', async (e) => {
-        const option = e.target.closest('.language-option');
+        const option = e.target.closest('.gorgeous-dropdown-option');
         if (option) {
+          e.preventDefault();
           const variantName = option.textContent;
           variantInput.value = variantName;
           variantDropdown.style.display = 'none';
-          const variant = englishVariants.find(v => v.name === variantName);
-          await chrome.storage.sync.set({ englishVariant: variant ? variant.code : variantName });
+          const variant = languageVariants.find(v => v.name === variantName);
+          await chrome.storage.sync.set({ languageVariant: variant ? variant.code : variantName });
+          variantInput.blur();
         }
       });
-      // Hide dropdown on outside click
-      document.addEventListener('mousedown', (e) => {
-        if (!variantDropdown.contains(e.target) && e.target !== variantInput) {
-          variantDropdown.style.display = 'none';
-        }
+
+      // Hide dropdown on blur (when clicking away)
+      variantInput.addEventListener('blur', async (e) => {
+        // Use a small delay to allow click on dropdown to register
+        setTimeout(async () => {
+          if (!variantDropdown.contains(document.activeElement)) {
+            variantDropdown.style.display = 'none';
+            const value = variantInput.value.trim();
+            if (value) {
+              const variant = languageVariants.find(v => v.name === value || v.code === value);
+              await chrome.storage.sync.set({ languageVariant: variant ? variant.code : value });
+            }
+          }
+        }, 150);
       });
-      // Save custom value on blur
-      variantInput.addEventListener('blur', async () => {
-        const value = variantInput.value.trim();
-        if (value) {
-          const variant = englishVariants.find(v => v.name === value || v.code === value);
-          await chrome.storage.sync.set({ englishVariant: variant ? variant.code : value });
-        }
-      });
-    }, 0);
+
+      // Set initial value
+      variantInput.value = settings.languageVariant && languageVariants.find(v => v.code === settings.languageVariant) ? languageVariants.find(v => v.code === settings.languageVariant).name : (settings.languageVariant || '');
+
+      // Attach to container
+      const variantContainer = document.getElementById('variantDropdownContainer');
+      if (variantContainer) {
+        variantContainer.innerHTML = ''; // Clear previous
+        variantContainer.appendChild(variantInput);
+        variantContainer.appendChild(variantDropdown);
+      }
+    }, 200);
   }
 
   handleRegenerateError(error) {
@@ -1574,11 +1620,59 @@ const supportedLanguages = [
   { name: 'Vietnamese', code: 'vi' }, { name: 'Welsh', code: 'cy' }, { name: 'Xhosa', code: 'xh' },
   { name: 'Yiddish', code: 'yi' }, { name: 'Yoruba', code: 'yo' }, { name: 'Zulu', code: 'zu' }
 ];
-const englishVariants = [
-  { code: 'US', name: 'American English' },
-  { code: 'UK', name: 'British English' },
-  { code: 'AU', name: 'Australian English' },
-  { code: 'CA', name: 'Canadian English' },
-  { code: 'NZ', name: 'New Zealand English' },
-  { code: 'ZA', name: 'South African English' }
+const languageVariants = [
+  // --- English Variants ---
+  { code: 'US', name: 'United States (American English)' },
+  { code: 'UK', name: 'United Kingdom (British English)' },
+  { code: 'AU', name: 'Australia (Australian English)' },
+  { code: 'CA', name: 'Canada (Canadian English)' },
+  { code: 'NZ', name: 'New Zealand (New Zealand English)' },
+  { code: 'ZA', name: 'South Africa (South African English)' },
+  { code: 'IE', name: 'Ireland (Irish English)' },
+  { code: 'IN', name: 'India (Indian English)' },
+  { code: 'SG', name: 'Singapore (Singaporean English)' },
+  { code: 'SCO', name: 'Scotland (Scottish English)' },
+  { code: 'NG', name: 'Nigeria (Nigerian English)' },
+  { code: 'PH', name: 'Philippines (Philippine English)' },
+
+  // --- Spanish Variants ---
+  { code: 'ES-ES', name: 'Spain (Castilian Spanish)' },
+  { code: 'ES-MX', name: 'Mexico (Mexican Spanish)' },
+  { code: 'ES-AR', name: 'Argentina (Argentinian Spanish)' },
+  { code: 'ES-CO', name: 'Colombia (Colombian Spanish)' },
+  { code: 'ES-LATAM', name: 'Latin America (General Spanish)' },
+
+  // --- French Variants ---
+  { code: 'FR-FR', name: 'France (European French)' },
+  { code: 'FR-CA', name: 'Canada (Canadian French)' },
+  { code: 'FR-AF', name: 'Africa (African French)' },
+
+  // --- Portuguese Variants ---
+  { code: 'PT-PT', name: 'Portugal (European Portuguese)' },
+  { code: 'PT-BR', name: 'Brazil (Brazilian Portuguese)' },
+
+  // --- German Variants ---
+  { code: 'DE-DE', name: 'Germany (Standard German)' },
+  { code: 'DE-AT', name: 'Austria (Austrian German)' },
+  { code: 'DE-CH', name: 'Switzerland (Swiss German)' },
+
+  // --- Chinese Variants ---
+  { code: 'ZH-CN', name: 'Mainland China (Mandarin, Simplified)' },
+  { code: 'ZH-HK', name: 'Hong Kong (Cantonese, Traditional)' },
+  { code: 'ZH-TW', name: 'Taiwan (Taiwanese Mandarin, Traditional)' },
+
+  // --- Arabic Variants ---
+  { code: 'AR-MSA', name: 'Modern Standard Arabic' },
+  { code: 'AR-EG', name: 'Egypt (Egyptian Arabic)' },
+  { code: 'AR-LEV', name: 'Levant (Levantine Arabic)' },
+
+  // --- Accented English ---
+  { code: 'EN-ACCENT-FR', name: 'English (French Accent)' },
+  { code: 'EN-ACCENT-DE', name: 'English (German Accent)' },
+  { code: 'EN-ACCENT-ES', name: 'English (Spanish Accent)' },
+  { code: 'EN-ACCENT-IT', name: 'English (Italian Accent)' },
+  { code: 'EN-ACCENT-RU', name: 'English (Russian Accent)' },
+  { code: 'EN-ACCENT-JP', name: 'English (Japanese Accent)' },
+  { code: 'EN-ACCENT-KR', name: 'English (Korean Accent)' },
+  { code: 'EN-ACCENT-CN', name: 'English (Chinese Accent)' }
 ];

@@ -1211,7 +1211,6 @@ class GmailRewriter {
       }
       const targetLang = await chrome.storage.sync.get(['targetLanguage']);
       const targetLanguage = targetLang.targetLanguage.name;
-      console.log(targetLanguage, 'targetLanguage');
 
       const btn = e.target.closest('button');
       const originalButtonText = btn.innerHTML;
@@ -1227,7 +1226,6 @@ class GmailRewriter {
       
       // Also trigger translation
       this.doTranslate();
-      console.log(feedback, 'feedback');
       // Append user feedback to the history
       conversationHistory.push({ role: 'user', content: feedback });
 

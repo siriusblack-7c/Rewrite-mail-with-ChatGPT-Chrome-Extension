@@ -145,7 +145,6 @@ class GmailRewriter {
         return `Variant Model: ${englishVariant} ; You are a professional writing assistant. You have to rewrite the text into English. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary. Use this model's spelling, terminology, phrasing to sound like a native speaker.`;
       }
     } catch (error) {
-      // console.error('Error initializing variant prompts:', error);
       // Return a default prompt as a fallback
       return `You are a professional writing assistant. You have to rewrite the text into English. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary. Use US English spelling, terminology, phrasing to sound like a native speaker.`;
     }
@@ -299,8 +298,6 @@ class GmailRewriter {
         const errorMessage = errorData.error?.message || response.statusText;
 
         if ((response.status === 429 || response.status >= 500) && attempt < maxRetries) {
-          const backoffTime = await this.exponentialBackoff(attempt);
-          // console.warn(`API error ${response.status}. Retrying in ${Math.round(backoffTime)}ms...`);
           continue;
         }
 
@@ -309,8 +306,6 @@ class GmailRewriter {
       } catch (error) {
         if (error.name === 'TypeError' || !error.message.includes(':')) {
           if (attempt < maxRetries) {
-            const backoffTime = await this.exponentialBackoff(attempt);
-            // console.warn(`Network error. Retrying in ${Math.round(backoffTime)}ms...`);
             continue;
           } else {
             throw new Error(`Network: Failed to connect to API after ${maxRetries + 1} attempts.`);
@@ -1214,6 +1209,9 @@ class GmailRewriter {
       if (!feedback) {
         feedback = 'Rewrite the email text, paying close attention to the original request.';
       }
+      const targetLang = await chrome.storage.sync.get(['targetLanguage']);
+      const targetLanguage = targetLang.targetLanguage.name;
+      console.log(targetLanguage, 'targetLanguage');
 
       const btn = e.target.closest('button');
       const originalButtonText = btn.innerHTML;
@@ -1223,10 +1221,13 @@ class GmailRewriter {
       const rewrittenTextArea = dialog.querySelector('#rewrittenTextArea');
       const previousRewrittenText = rewrittenTextArea.value;
       rewrittenTextArea.value = 'Rewriting...';
-
+      if (targetLanguage) {
+        feedback += `. You have to translate the text into ${targetLanguage}.`;
+      }
+      
       // Also trigger translation
-      await this.doTranslate();
-
+      this.doTranslate();
+      console.log(feedback, 'feedback');
       // Append user feedback to the history
       conversationHistory.push({ role: 'user', content: feedback });
 

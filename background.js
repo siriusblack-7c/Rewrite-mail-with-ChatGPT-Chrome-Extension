@@ -1,4 +1,4 @@
-// Background Service Worker for Native English Email Assistant
+// Background Service Worker for Native Email Assistant
 
 chrome.runtime.onInstalled.addListener((details) => {
     if (details.reason === 'install') {
@@ -27,7 +27,7 @@ chrome.action.onClicked.addListener((tab) => {
 function showExtensionActiveMessage() {
     // This function runs in the content script context
     const message = document.createElement('div');
-    message.textContent = 'Native English Email Assistant is active! Look for the "Rewrite for English" button when composing emails.';
+    message.textContent = 'Native Email Assistant is active! Look for the "Rewrite" button when composing emails.';
     message.style.position = 'fixed';
     message.style.top = '20px';
     message.style.right = '20px';

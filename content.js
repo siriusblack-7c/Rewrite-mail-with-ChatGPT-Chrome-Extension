@@ -1,3 +1,90 @@
+// --- Language/variant lists (reuse from popup.js) ---
+const supportedLanguages = [
+  { name: 'Abkhaz', code: 'ab' }, { name: 'Afrikaans', code: 'af' }, { name: 'Albanian', code: 'sq' },
+  { name: 'Amharic', code: 'am' }, { name: 'Arabic', code: 'ar' }, { name: 'Armenian', code: 'hy' },
+  { name: 'Assamese', code: 'as' }, { name: 'Aymara', code: 'ay' }, { name: 'Azerbaijani', code: 'az' },
+  { name: 'Basque', code: 'eu' }, { name: 'Belarusian', code: 'be' }, { name: 'Bengali', code: 'bn' },
+  { name: 'Bosnian', code: 'bs' }, { name: 'Bulgarian', code: 'bg' }, { name: 'Burmese', code: 'my' },
+  { name: 'Catalan', code: 'ca' }, { name: 'Chinese (Simplified)', code: 'zh-CN' }, { name: 'Chinese (Traditional)', code: 'zh-TW' },
+  { name: 'Croatian', code: 'hr' }, { name: 'Czech', code: 'cs' }, { name: 'Danish', code: 'da' },
+  { name: 'Dutch', code: 'nl' }, { name: 'English', code: 'en' }, { name: 'Estonian', code: 'et' },
+  { name: 'Filipino', code: 'fil' }, { name: 'Finnish', code: 'fi' }, { name: 'French', code: 'fr' },
+  { name: 'German', code: 'de' }, { name: 'Greek', code: 'el' }, { name: 'Gujarati', code: 'gu' },
+  { name: 'Haitian Creole', code: 'ht' }, { name: 'Hebrew', code: 'he' }, { name: 'Hindi', code: 'hi' },
+  { name: 'Hungarian', code: 'hu' }, { name: 'Icelandic', code: 'is' }, { name: 'Indonesian', code: 'id' },
+  { name: 'Italian', code: 'it' }, { name: 'Japanese', code: 'ja' }, { name: 'Javanese', code: 'jv' },
+  { name: 'Kannada', code: 'kn' }, { name: 'Kazakh', code: 'kk' }, { name: 'Khmer', code: 'km' },
+  { name: 'Korean', code: 'ko' }, { name: 'Kurdish (Kurmanji)', code: 'ku' }, { name: 'Kyrgyz', code: 'ky' },
+  { name: 'Lao', code: 'lo' }, { name: 'Latvian', code: 'lv' }, { name: 'Lithuanian', code: 'lt' },
+  { name: 'Luxembourgish', code: 'lb' }, { name: 'Macedonian', code: 'mk' }, { name: 'Malay', code: 'ms' },
+  { name: 'Malayalam', code: 'ml' }, { name: 'Maltese', code: 'mt' }, { name: 'Maori', code: 'mi' },
+  { name: 'Marathi', code: 'mr' }, { name: 'Mongolian', code: 'mn' }, { name: 'Nepali', code: 'ne' },
+  { name: 'Norwegian', code: 'no' }, { name: 'Persian', code: 'fa' }, { name: 'Polish', code: 'pl' },
+  { name: 'Portuguese', code: 'pt' }, { name: 'Punjabi', code: 'pa' }, { name: 'Romanian', code: 'ro' },
+  { name: 'Russian', code: 'ru' }, { name: 'Serbian', code: 'sr' }, { name: 'Sinhala', code: 'si' },
+  { name: 'Slovak', code: 'sk' }, { name: 'Slovenian', code: 'sl' }, { name: 'Spanish', code: 'es' },
+  { name: 'Swahili', code: 'sw' }, { name: 'Swedish', code: 'sv' }, { name: 'Tamil', code: 'ta' },
+  { name: 'Telugu', code: 'te' }, { name: 'Thai', code: 'th' }, { name: 'Turkish', code: 'tr' },
+  { name: 'Ukrainian', code: 'uk' }, { name: 'Urdu', code: 'ur' }, { name: 'Uzbek', code: 'uz' },
+  { name: 'Vietnamese', code: 'vi' }, { name: 'Welsh', code: 'cy' }, { name: 'Xhosa', code: 'xh' },
+  { name: 'Yiddish', code: 'yi' }, { name: 'Yoruba', code: 'yo' }, { name: 'Zulu', code: 'zu' }
+];
+const languageVariants = [
+  // --- English Variants ---
+  { code: 'US', name: 'United States (American English)' },
+  { code: 'UK', name: 'United Kingdom (British English)' },
+  { code: 'AU', name: 'Australia (Australian English)' },
+  { code: 'CA', name: 'Canada (Canadian English)' },
+  { code: 'NZ', name: 'New Zealand (New Zealand English)' },
+  { code: 'ZA', name: 'South Africa (South African English)' },
+  { code: 'IE', name: 'Ireland (Irish English)' },
+  { code: 'IN', name: 'India (Indian English)' },
+  { code: 'SG', name: 'Singapore (Singaporean English)' },
+  { code: 'SCO', name: 'Scotland (Scottish English)' },
+  { code: 'NG', name: 'Nigeria (Nigerian English)' },
+  { code: 'PH', name: 'Philippines (Philippine English)' },
+
+  // --- Spanish Variants ---
+  { code: 'ES-ES', name: 'Spain (Castilian Spanish)' },
+  { code: 'ES-MX', name: 'Mexico (Mexican Spanish)' },
+  { code: 'ES-AR', name: 'Argentina (Argentinian Spanish)' },
+  { code: 'ES-CO', name: 'Colombia (Colombian Spanish)' },
+  { code: 'ES-LATAM', name: 'Latin America (General Spanish)' },
+
+  // --- French Variants ---
+  { code: 'FR-FR', name: 'France (European French)' },
+  { code: 'FR-CA', name: 'Canada (Canadian French)' },
+  { code: 'FR-AF', name: 'Africa (African French)' },
+
+  // --- Portuguese Variants ---
+  { code: 'PT-PT', name: 'Portugal (European Portuguese)' },
+  { code: 'PT-BR', name: 'Brazil (Brazilian Portuguese)' },
+
+  // --- German Variants ---
+  { code: 'DE-DE', name: 'Germany (Standard German)' },
+  { code: 'DE-AT', name: 'Austria (Austrian German)' },
+  { code: 'DE-CH', name: 'Switzerland (Swiss German)' },
+
+  // --- Chinese Variants ---
+  { code: 'ZH-CN', name: 'Mainland China (Mandarin, Simplified)' },
+  { code: 'ZH-HK', name: 'Hong Kong (Cantonese, Traditional)' },
+  { code: 'ZH-TW', name: 'Taiwan (Taiwanese Mandarin, Traditional)' },
+
+  // --- Arabic Variants ---
+  { code: 'AR-MSA', name: 'Modern Standard Arabic' },
+  { code: 'AR-EG', name: 'Egypt (Egyptian Arabic)' },
+  { code: 'AR-LEV', name: 'Levant (Levantine Arabic)' },
+
+  // --- Accented English ---
+  { code: 'EN-ACCENT-FR', name: 'English (French Accent)' },
+  { code: 'EN-ACCENT-DE', name: 'English (German Accent)' },
+  { code: 'EN-ACCENT-ES', name: 'English (Spanish Accent)' },
+  { code: 'EN-ACCENT-IT', name: 'English (Italian Accent)' },
+  { code: 'EN-ACCENT-RU', name: 'English (Russian Accent)' },
+  { code: 'EN-ACCENT-JP', name: 'English (Japanese Accent)' },
+  { code: 'EN-ACCENT-KR', name: 'English (Korean Accent)' },
+  { code: 'EN-ACCENT-CN', name: 'English (Chinese Accent)' }
+];
 // Gmail Integration Content Script - Optimized
 class GmailRewriter {
   constructor() {
@@ -45,16 +132,22 @@ class GmailRewriter {
   }
 
   async initializeVariantPrompts() {
-    const result = await chrome.storage.sync.get(['targetLanguage', 'languageVariant']);
-    const targetLanguage = result.targetLanguage;
-    const englishVariant = result.languageVariant || 'US';
+    try {
+      const result = await chrome.storage.sync.get(['targetLanguage', 'languageVariant']);
+      const targetLanguage = result.targetLanguage;
+      const englishVariant = result.languageVariant || 'US';
 
-    // If target language is set and it's not English, rewrite to that language
-    if (targetLanguage && targetLanguage.code !== 'en') {
-      return `You are a professional writing assistant. You have to rewrite the text into ${targetLanguage.name}. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary. Use ${targetLanguage.name} spelling, terminology, phrasing to sound like a native speaker.`;
-    } else {
-      // Default to English variant rewriting
-      return `Variant Model: ${englishVariant} ; You are a professional writing assistant. You have to rewrite the text into English. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary. Use this model's spelling, terminology, phrasing to sound like a native speaker.`;
+      // If target language is set and it's not English, rewrite to that language
+      if (targetLanguage && targetLanguage.code !== 'en') {
+        return `You are a professional writing assistant. You have to rewrite the text into ${targetLanguage.name}. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary. Use ${targetLanguage.name} spelling, terminology, phrasing to sound like a native speaker.`;
+      } else {
+        // Default to English variant rewriting
+        return `Variant Model: ${englishVariant} ; You are a professional writing assistant. You have to rewrite the text into English. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary. Use this model's spelling, terminology, phrasing to sound like a native speaker.`;
+      }
+    } catch (error) {
+      console.error('Error initializing variant prompts:', error);
+      // Return a default prompt as a fallback
+      return `You are a professional writing assistant. You have to rewrite the text into English. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary. Use US English spelling, terminology, phrasing to sound like a native speaker.`;
     }
   }
 
@@ -811,8 +904,8 @@ class GmailRewriter {
     button.disabled = true;
 
     try {
-      const rewrittenText = await this.rewriteWithChatGPT(originalText);
-      this.showPreviewDialog(composeWindow, originalText, rewrittenText, composeBody, isUserInputOnly, originalHTML);
+      const { rewrittenText, messages, signature, hasSignature } = await this.rewriteWithChatGPT(originalText);
+      this.showPreviewDialog(composeWindow, originalText, rewrittenText, composeBody, isUserInputOnly, originalHTML, messages, signature, hasSignature);
     } catch (error) {
       this.handleRewriteError(error);
     } finally {
@@ -873,41 +966,26 @@ class GmailRewriter {
   async rewriteWithChatGPT(text) {
     const { mainContent, signature, hasSignature } = this.splitEmailContent(text);
 
+    const messages = [
+      { role: 'system', content: await this.initializeVariantPrompts() },
+      { role: 'user', content: mainContent }
+    ];
+
     const requestBody = {
       model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: await this.initializeVariantPrompts() },
-        { role: 'user', content: mainContent }
-      ],
+      messages: messages,
       max_tokens: 1000,
       temperature: 0.3
     };
 
     const data = await this.addToQueue(requestBody);
-    return this.combineEmailContent(data.choices[0].message.content, signature, hasSignature);
-  }
+    const rewrittenContent = data.choices[0].message.content;
+    const combinedText = this.combineEmailContent(rewrittenContent, signature, hasSignature);
 
-  async rewriteWithFeedback(text, feedback) {
-    const { mainContent, signature, hasSignature } = this.splitEmailContent(text);
+    // Add assistant's response to messages array for conversation history
+    messages.push({ role: 'assistant', content: rewrittenContent });
 
-    const rewrittenTextArea = document.querySelector('#rewrittenTextArea');
-    if (rewrittenTextArea) {
-      rewrittenTextArea.value = 'Rewriting...';
-    }
-
-    await this.doTranslate();
-
-    const requestBody = {
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: await this.initializeVariantPrompts() },
-        { role: 'user', content: `Please rewrite the following email text. Additionally, please incorporate this specific feedback: "${feedback}"\n\nEmail text to rewrite:\n${mainContent}` }
-      ],
-      max_tokens: 1000,
-      temperature: 0.3
-    };
-    const data = await this.addToQueue(requestBody);
-    return this.combineEmailContent(data.choices[0].message.content, signature, hasSignature);
+    return { rewrittenText: combinedText, messages, signature, hasSignature };
   }
 
   // Optimized HTML operations
@@ -1053,8 +1131,8 @@ class GmailRewriter {
     return textarea.value;
   }
   // Optimized preview dialog
-  showPreviewDialog(composeWindow, originalText, rewrittenText, composeBody, isUserInputOnly = false, originalHTML = null) {
-    const variantName = this.variantNames[this.variant] || 'American English';
+  showPreviewDialog(composeWindow, originalText, rewrittenText, composeBody, isUserInputOnly = false, originalHTML = null, messages = [], signature = '', hasSignature = false) {
+    let conversationHistory = messages;
 
     const overlay = document.createElement('div');
     overlay.className = 'native-english-overlay';
@@ -1130,20 +1208,46 @@ class GmailRewriter {
       let feedback = dialog.querySelector('#feedbackTextArea').value.trim();
 
       if (!currentText) return this.showMessage('Please enter some text to rewrite.', 'error');
-      if (!feedback) feedback = 'rewrite';
+      if (!feedback) feedback = 'Rewrite the email text.';
 
-      const btn = e.target;
+      const btn = e.target.closest('button');
       const originalButtonText = btn.innerHTML;
       btn.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin" style="color:rgb(255, 255, 255);margin-right:4px;"></i> Regenerating...';
       btn.disabled = true;
 
+      const rewrittenTextArea = dialog.querySelector('#rewrittenTextArea');
+      const previousRewrittenText = rewrittenTextArea.value;
+      rewrittenTextArea.value = 'Rewriting...';
+
+      // Also trigger translation
+      await this.doTranslate();
+
+      // Append user feedback to the history
+      conversationHistory.push({ role: 'user', content: feedback });
+
+      const requestBody = {
+        model: 'gpt-4o-mini',
+        messages: conversationHistory,
+        max_tokens: 1000,
+        temperature: 0.3
+      };
+
       try {
-        const newRewrittenText = await this.rewriteWithFeedback(currentText, feedback);
-        dialog.querySelector('#rewrittenTextArea').value = newRewrittenText;
+        const data = await this.addToQueue(requestBody);
+        const newContent = data.choices[0].message.content;
+
+        // Update conversation history with the new assistant response
+        conversationHistory.push({ role: 'assistant', content: newContent });
+
+        const newRewrittenText = this.combineEmailContent(newContent, signature, hasSignature);
+        rewrittenTextArea.value = newRewrittenText;
         dialog.querySelector('#feedbackTextArea').value = '';
         this.showMessage('Text regenerated successfully!', 'success');
       } catch (error) {
+        // If there's an error, pop the last user message to allow retrying
+        conversationHistory.pop();
         this.handleRegenerateError(error);
+        rewrittenTextArea.value = previousRewrittenText; // Restore previous text
       } finally {
         btn.innerHTML = originalButtonText;
         btn.disabled = false;
@@ -1393,8 +1497,16 @@ class GmailRewriter {
       inputLangDropdown.addEventListener('change', async (e) => {
         const code = e.target.value;
         let langObj = code === 'auto' ? 'auto' : supportedLanguages.find(l => l.code === code);
-        await chrome.storage.sync.set({ inputLanguage: langObj });
-        // Optionally, trigger preview update here if needed
+        try {
+          await chrome.storage.sync.set({ inputLanguage: langObj });
+        } catch (error) {
+          if (error.message.includes('Extension context invalidated')) {
+            // This can happen if the dialog is closed while the async operation is pending.
+            // It's safe to ignore in this context.
+          } else {
+            throw error; // Re-throw other errors
+          }
+        }
       });
       // --- Target Language Dropdown ---
       const targetLangDropdown = document.createElement('select');
@@ -1412,8 +1524,15 @@ class GmailRewriter {
       targetLangDropdown.addEventListener('change', async (e) => {
         const code = e.target.value;
         let langObj = supportedLanguages.find(l => l.code === code);
-        await chrome.storage.sync.set({ targetLanguage: langObj });
-        // Optionally, trigger preview update here if needed
+        try {
+          await chrome.storage.sync.set({ targetLanguage: langObj });
+        } catch (error) {
+          if (error.message.includes('Extension context invalidated')) {
+            // This can happen if the dialog is closed while the async operation is pending.
+          } else {
+            throw error;
+          }
+        }
       });
       // --- Language Variant Combo Box in Preview Dialog ---
       const variantInput = document.createElement('input');
@@ -1471,7 +1590,13 @@ class GmailRewriter {
           variantInput.value = variantName;
           variantDropdown.style.display = 'none';
           const variant = languageVariants.find(v => v.name === variantName);
-          await chrome.storage.sync.set({ languageVariant: variant ? variant.code : variantName });
+          try {
+            await chrome.storage.sync.set({ languageVariant: variant ? variant.code : variantName });
+          } catch (error) {
+            if (!error.message.includes('Extension context invalidated')) {
+              throw error;
+            }
+          }
           variantInput.blur();
         }
       });
@@ -1485,7 +1610,13 @@ class GmailRewriter {
             const value = variantInput.value.trim();
             if (value) {
               const variant = languageVariants.find(v => v.name === value || v.code === value);
-              await chrome.storage.sync.set({ languageVariant: variant ? variant.code : value });
+              try {
+                await chrome.storage.sync.set({ languageVariant: variant ? variant.code : value });
+              } catch (error) {
+                if (!error.message.includes('Extension context invalidated')) {
+                  throw error;
+                }
+              }
             }
           }
         }, 150);
@@ -1588,91 +1719,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
 });
-
-// --- Language/variant lists (reuse from popup.js) ---
-const supportedLanguages = [
-  { name: 'Abkhaz', code: 'ab' }, { name: 'Afrikaans', code: 'af' }, { name: 'Albanian', code: 'sq' },
-  { name: 'Amharic', code: 'am' }, { name: 'Arabic', code: 'ar' }, { name: 'Armenian', code: 'hy' },
-  { name: 'Assamese', code: 'as' }, { name: 'Aymara', code: 'ay' }, { name: 'Azerbaijani', code: 'az' },
-  { name: 'Basque', code: 'eu' }, { name: 'Belarusian', code: 'be' }, { name: 'Bengali', code: 'bn' },
-  { name: 'Bosnian', code: 'bs' }, { name: 'Bulgarian', code: 'bg' }, { name: 'Burmese', code: 'my' },
-  { name: 'Catalan', code: 'ca' }, { name: 'Chinese (Simplified)', code: 'zh-CN' }, { name: 'Chinese (Traditional)', code: 'zh-TW' },
-  { name: 'Croatian', code: 'hr' }, { name: 'Czech', code: 'cs' }, { name: 'Danish', code: 'da' },
-  { name: 'Dutch', code: 'nl' }, { name: 'English', code: 'en' }, { name: 'Estonian', code: 'et' },
-  { name: 'Filipino', code: 'fil' }, { name: 'Finnish', code: 'fi' }, { name: 'French', code: 'fr' },
-  { name: 'German', code: 'de' }, { name: 'Greek', code: 'el' }, { name: 'Gujarati', code: 'gu' },
-  { name: 'Haitian Creole', code: 'ht' }, { name: 'Hebrew', code: 'he' }, { name: 'Hindi', code: 'hi' },
-  { name: 'Hungarian', code: 'hu' }, { name: 'Icelandic', code: 'is' }, { name: 'Indonesian', code: 'id' },
-  { name: 'Italian', code: 'it' }, { name: 'Japanese', code: 'ja' }, { name: 'Javanese', code: 'jv' },
-  { name: 'Kannada', code: 'kn' }, { name: 'Kazakh', code: 'kk' }, { name: 'Khmer', code: 'km' },
-  { name: 'Korean', code: 'ko' }, { name: 'Kurdish (Kurmanji)', code: 'ku' }, { name: 'Kyrgyz', code: 'ky' },
-  { name: 'Lao', code: 'lo' }, { name: 'Latvian', code: 'lv' }, { name: 'Lithuanian', code: 'lt' },
-  { name: 'Luxembourgish', code: 'lb' }, { name: 'Macedonian', code: 'mk' }, { name: 'Malay', code: 'ms' },
-  { name: 'Malayalam', code: 'ml' }, { name: 'Maltese', code: 'mt' }, { name: 'Maori', code: 'mi' },
-  { name: 'Marathi', code: 'mr' }, { name: 'Mongolian', code: 'mn' }, { name: 'Nepali', code: 'ne' },
-  { name: 'Norwegian', code: 'no' }, { name: 'Persian', code: 'fa' }, { name: 'Polish', code: 'pl' },
-  { name: 'Portuguese', code: 'pt' }, { name: 'Punjabi', code: 'pa' }, { name: 'Romanian', code: 'ro' },
-  { name: 'Russian', code: 'ru' }, { name: 'Serbian', code: 'sr' }, { name: 'Sinhala', code: 'si' },
-  { name: 'Slovak', code: 'sk' }, { name: 'Slovenian', code: 'sl' }, { name: 'Spanish', code: 'es' },
-  { name: 'Swahili', code: 'sw' }, { name: 'Swedish', code: 'sv' }, { name: 'Tamil', code: 'ta' },
-  { name: 'Telugu', code: 'te' }, { name: 'Thai', code: 'th' }, { name: 'Turkish', code: 'tr' },
-  { name: 'Ukrainian', code: 'uk' }, { name: 'Urdu', code: 'ur' }, { name: 'Uzbek', code: 'uz' },
-  { name: 'Vietnamese', code: 'vi' }, { name: 'Welsh', code: 'cy' }, { name: 'Xhosa', code: 'xh' },
-  { name: 'Yiddish', code: 'yi' }, { name: 'Yoruba', code: 'yo' }, { name: 'Zulu', code: 'zu' }
-];
-const languageVariants = [
-  // --- English Variants ---
-  { code: 'US', name: 'United States (American English)' },
-  { code: 'UK', name: 'United Kingdom (British English)' },
-  { code: 'AU', name: 'Australia (Australian English)' },
-  { code: 'CA', name: 'Canada (Canadian English)' },
-  { code: 'NZ', name: 'New Zealand (New Zealand English)' },
-  { code: 'ZA', name: 'South Africa (South African English)' },
-  { code: 'IE', name: 'Ireland (Irish English)' },
-  { code: 'IN', name: 'India (Indian English)' },
-  { code: 'SG', name: 'Singapore (Singaporean English)' },
-  { code: 'SCO', name: 'Scotland (Scottish English)' },
-  { code: 'NG', name: 'Nigeria (Nigerian English)' },
-  { code: 'PH', name: 'Philippines (Philippine English)' },
-
-  // --- Spanish Variants ---
-  { code: 'ES-ES', name: 'Spain (Castilian Spanish)' },
-  { code: 'ES-MX', name: 'Mexico (Mexican Spanish)' },
-  { code: 'ES-AR', name: 'Argentina (Argentinian Spanish)' },
-  { code: 'ES-CO', name: 'Colombia (Colombian Spanish)' },
-  { code: 'ES-LATAM', name: 'Latin America (General Spanish)' },
-
-  // --- French Variants ---
-  { code: 'FR-FR', name: 'France (European French)' },
-  { code: 'FR-CA', name: 'Canada (Canadian French)' },
-  { code: 'FR-AF', name: 'Africa (African French)' },
-
-  // --- Portuguese Variants ---
-  { code: 'PT-PT', name: 'Portugal (European Portuguese)' },
-  { code: 'PT-BR', name: 'Brazil (Brazilian Portuguese)' },
-
-  // --- German Variants ---
-  { code: 'DE-DE', name: 'Germany (Standard German)' },
-  { code: 'DE-AT', name: 'Austria (Austrian German)' },
-  { code: 'DE-CH', name: 'Switzerland (Swiss German)' },
-
-  // --- Chinese Variants ---
-  { code: 'ZH-CN', name: 'Mainland China (Mandarin, Simplified)' },
-  { code: 'ZH-HK', name: 'Hong Kong (Cantonese, Traditional)' },
-  { code: 'ZH-TW', name: 'Taiwan (Taiwanese Mandarin, Traditional)' },
-
-  // --- Arabic Variants ---
-  { code: 'AR-MSA', name: 'Modern Standard Arabic' },
-  { code: 'AR-EG', name: 'Egypt (Egyptian Arabic)' },
-  { code: 'AR-LEV', name: 'Levant (Levantine Arabic)' },
-
-  // --- Accented English ---
-  { code: 'EN-ACCENT-FR', name: 'English (French Accent)' },
-  { code: 'EN-ACCENT-DE', name: 'English (German Accent)' },
-  { code: 'EN-ACCENT-ES', name: 'English (Spanish Accent)' },
-  { code: 'EN-ACCENT-IT', name: 'English (Italian Accent)' },
-  { code: 'EN-ACCENT-RU', name: 'English (Russian Accent)' },
-  { code: 'EN-ACCENT-JP', name: 'English (Japanese Accent)' },
-  { code: 'EN-ACCENT-KR', name: 'English (Korean Accent)' },
-  { code: 'EN-ACCENT-CN', name: 'English (Chinese Accent)' }
-];

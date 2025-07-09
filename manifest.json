@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Native English Email Assistant",
+    "name": "Native Email Assistant",
     "version": "2.1",
-    "description": "Rewrite emails to sound like native English (US, UK, AU, CA, NZ, ZA) using AI",
+    "description": "Rewrite emails to sound like native speakers using AI",
     "permissions": [
         "activeTab",
         "storage"
@@ -29,7 +29,7 @@
     },
     "action": {
         "default_popup": "popup.html",
-        "default_title": "Native English Email Assistant"
+        "default_title": "Native Email Assistant"
     },
     "icons": {
         "16": "icons/icon16.png",

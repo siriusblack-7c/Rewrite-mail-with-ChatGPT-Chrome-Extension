@@ -1,4 +1,4 @@
-// Popup JavaScript for Native English Email Assistant
+// Popup JavaScript for Native Email Assistant
 document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('settingsForm');
     const apiKeyInput = document.getElementById('apiKey');
@@ -371,9 +371,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             showDetailedStatus('OpenAI Settings Saved', 'Your OpenAI API key and language variant have been saved successfully.', 'success', 'openai');
             document.getElementById('openaiKeyStatus').innerHTML = '<i class="fa-solid fa-check-circle" style="color:#22c55e;"></i> Saved';
             document.getElementById('openaiKeyStatus').style.color = '#22c55e';
-            chrome.tabs && chrome.tabs.query && chrome.tabs.sendMessage && chrome.tabs.query({}, function (tabs) {
+            // Send message only to Gmail tabs to refresh buttons
+            chrome.tabs.query({ url: "*://mail.google.com/*" }, (tabs) => {
                 for (let tab of tabs) {
-                    chrome.tabs.sendMessage(tab.id, { action: "refreshRewriteButtons" });
+                    chrome.tabs.sendMessage(tab.id, { action: "refreshRewriteButtons" }, () => {
+                        if (chrome.runtime.lastError) {
+                            // Suppress error if the content script is not yet injected
+                        }
+                    });
                 }
             });
         } catch (error) {

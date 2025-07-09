@@ -3,7 +3,7 @@ class GmailRewriter {
   constructor() {
     this.injectFontAwesome();
     this.apiKey = null;
-    this.englishVariant = 'US';
+    this.variant = 'American English';
     this.requestQueue = [];
     this.isProcessingQueue = false;
     this.rateLimitInfo = {
@@ -39,22 +39,25 @@ class GmailRewriter {
   async init() {
     const result = await chrome.storage.sync.get(['openaiApiKey', 'englishVariant']);
     this.apiKey = result.openaiApiKey;
-    this.englishVariant = result.englishVariant || 'US';
+    this.variant = result.englishVariant || 'US';
     this.checkForConflicts();
     this.waitForGmail();
   }
 
-  initializeVariantPrompts() {
-    const base = 'You are a professional writing assistant. You have to rewrite the text into English. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary.';
+  async initializeVariantPrompts() {
+    const result = await chrome.storage.sync.get(['targetLanguage', 'englishVariant']);
+    const targetLanguage = result.targetLanguage;
+    const englishVariant = result.englishVariant || 'US';
 
-    return {
-      US: `${base} Use American spelling (e.g., "color", "analyze", "organize"), American terminology, and natural American phrasing to sound like a native American English speaker.`,
-      UK: `${base} Use British spelling (e.g., "colour", "analyse", "organise"), British terminology (e.g., "whilst", "amongst", "post" for mail), and natural British phrasing to sound like a native British English speaker.`,
-      AU: `${base} Use Australian spelling (British-based), Australian terminology and expressions, and natural Australian phrasing to sound like a native Australian English speaker.`,
-      CA: `${base} Use Canadian spelling (mix of British and American), Canadian terminology, and natural Canadian phrasing to sound like a native Canadian English speaker.`,
-      NZ: `${base} Use New Zealand spelling (British-based), New Zealand terminology and expressions, and natural New Zealand phrasing to sound like a native New Zealand English speaker.`,
-      ZA: `${base} Use South African spelling (British-based), South African terminology and expressions, and natural South African phrasing to sound like a native South African English speaker.`
-    };
+    console.log(targetLanguage, 'targetlang', this.variant);
+
+    // If target language is set and it's not English, rewrite to that language
+    if (targetLanguage && targetLanguage.code !== 'en') {
+      return `You are a professional writing assistant. You have to rewrite the text into ${targetLanguage.name}. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary. Use ${targetLanguage.name} spelling, terminology, phrasing to sound like a native speaker.`;
+    } else {
+      // Default to English variant rewriting
+      return `Variant Model: ${englishVariant} ; You are a professional writing assistant. You have to rewrite the text into English. Rewrite the following email text to improve grammar, word choice, and sentence structure to sound natural and professional. Maintain the original meaning and tone. Keep the same level of formality as the original. IMPORTANT: Preserve all text formatting including line breaks, bullet points, numbered lists, and paragraph structure. Return only the rewritten text without any additional commentary. Use this model's spelling, terminology, phrasing to sound like a native speaker.`;
+    }
   }
 
   getCachedSelector(key, selector, context = document) {
@@ -140,7 +143,7 @@ class GmailRewriter {
       if (area === 'sync') {
         if (changes.openaiApiKey) this.apiKey = changes.openaiApiKey.newValue;
         if (changes.englishVariant) {
-          this.englishVariant = changes.englishVariant.newValue || 'US';
+          this.variant = changes.englishVariant.newValue || 'US';
           this.refreshRewriteButtons();
         }
       }
@@ -662,7 +665,7 @@ class GmailRewriter {
 
     const style = document.createElement('style');
     style.id = 'native-english-button-styles';
-    style.textContent = `.native-english-rewrite-btn{display:inline-block!important;margin-left:12px!important;user-select:none!important}.native-english-rewrite-btn .rewrite-button{display:inline-flex!important;align-items:center!important;gap:8px!important;padding:8px 10px!important;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)!important;color:white!important;border:none!important;border-radius:20px!important;font-size:12px!important;font-weight:600!important;cursor:pointer!important;transition:all .3s ease!important;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif!important;box-shadow:0 4px 15px rgba(102,126,234,.3)!important;position:relative!important;overflow:hidden!important;user-select:none!important;outline:none!important}.native-english-rewrite-btn .rewrite-button:hover{background:linear-gradient(135deg,#5a67d8 0%,#6b46c1 100%)!important;box-shadow:0 8px 25px rgba(102,126,234,.4)!important;transform:translateY(-2px)!important}.native-english-rewrite-btn .rewrite-button:active{transform:translateY(0px)!important}.native-english-rewrite-btn .rewrite-button:disabled{background:linear-gradient(135deg,#a0aec0,#cbd5e0)!important;cursor:not-allowed!important;transform:none!important;box-shadow:none!important}.native-english-rewrite-btn .rewrite-button svg{width:16px!important;height:16px!important;fill:currentColor!important}`;
+    style.textContent = `.native-english-rewrite-btn{display:inline-block!important;margin-left:12px!important;user-select:none!important}.native-english-rewrite-btn .rewrite-button{display:inline-flex!important;align-items:center!important;gap:8px!important;padding:8px 10px!important;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)!important;color:white!important;border:none!important;border-radius:20px!important;font-size:12px!important;font-weight:600!important;cursor:pointer!important;transition:all .3s ease!important;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif!important;box-shadow:0 4px 15px rgba(102,126,234,.3)!important;position:relative!important;overflow:hidden!important;user-select:none!important;outline:none!important}.native-english-rewrite-btn .rewrite-button:hover{background:linear-gradient(135deg,#5a67d8 0%,#6b46c1 100%)!important;box-shadow:0 8px 25px rgba(102,126,234,.4)!important;transform:translateY(-2px)!important}.native-english-rewrite-btn .rewrite-button:active{transform:translateY(0px)!important}.native-english-rewrite-btn .rewrite-button:disabled{background:linear-gradient(135deg,#a0aec0,#cbd5e0)!important;cursor:not-allowed!important;transform:none!important;box-shadow:none!important}.native-english-rewrite-btn .rewrite-button svg{width:16px!important;height:16px!important;fill:currentColor!important}.spinning{animation:spin 1s linear infinite!important}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}`;
     document.head.appendChild(style);
   }
 
@@ -673,7 +676,7 @@ class GmailRewriter {
 
     const rewriteBtn = document.createElement('div');
     rewriteBtn.className = 'native-english-rewrite-btn';
-    rewriteBtn.innerHTML = `<button class="rewrite-button" title="Rewrite for ${this.englishVariant}"><i class="fa-solid fa-wand-magic-sparkles"></i></button>`;
+    rewriteBtn.innerHTML = `<button class="rewrite-button" title="Rewrite for ${this.variant}"><i class="fa-solid fa-wand-magic-sparkles"></i></button>`;
 
     rewriteBtn.querySelector('.rewrite-button').addEventListener('click', () => this.handleRewrite(composeWindow));
     // Try to find the .aDh container (Gmail action bar area)
@@ -878,7 +881,7 @@ class GmailRewriter {
     const requestBody = {
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: this.variantPrompts[this.englishVariant] || this.variantPrompts.US },
+        { role: 'system', content: await this.initializeVariantPrompts() },
         { role: 'user', content: mainContent }
       ],
       max_tokens: 1000,
@@ -891,17 +894,22 @@ class GmailRewriter {
 
   async rewriteWithFeedback(text, feedback) {
     const { mainContent, signature, hasSignature } = this.splitEmailContent(text);
+    const rewrittenTextArea = document.querySelector('#rewrittenTextArea');
+    await this.doTranslate();
+    // Update UI to show rewriting in progress
+    if (rewrittenTextArea) {
+      rewrittenTextArea.value = 'Rewriting...';
+    }
 
     const requestBody = {
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: this.variantPrompts[this.englishVariant] || this.variantPrompts.US },
+        { role: 'system', content: await this.initializeVariantPrompts() },
         { role: 'user', content: `Please rewrite the following email text. Additionally, please incorporate this specific feedback: "${feedback}"\n\nEmail text to rewrite:\n${mainContent}` }
       ],
       max_tokens: 1000,
       temperature: 0.3
     };
-
     const data = await this.addToQueue(requestBody);
     return this.combineEmailContent(data.choices[0].message.content, signature, hasSignature);
   }
@@ -953,10 +961,78 @@ class GmailRewriter {
     if (!formattedText.startsWith('<p>')) formattedText = `<p>${formattedText}</p>`;
     composeBody.innerHTML = formattedText.replace(/<p><\/p>/g, '');
   }
-
+  async doTranslate() {
+    const dialog = document.querySelector('.native-english-overlay');
+    const translateBtn = dialog.querySelector('#translateBtn');
+    const originalTextArea = dialog.querySelector('#originalTextArea');
+    const translatedTextArea = dialog.querySelector('#translatedTextArea');
+    // Disable translate button until original text is available
+    if (translateBtn) {
+      translateBtn.disabled = !originalTextArea.value.trim();
+    }
+    // Preprocess: preserve line breaks and paragraphs
+    let textToTranslate = originalTextArea.value.trim();
+    // Replace double newlines with [[PARA]], single newlines with [[BR]]
+    textToTranslate = textToTranslate.replace(/\n\n/g, '[[PARA]]').replace(/\n/g, '[[BR]]');
+    if (!textToTranslate) {
+      this.showMessage('No rewritten text to translate.', 'error');
+      return;
+    }
+    translatedTextArea.value = 'Translating...';
+    const originalBtnHTML = translateBtn.innerHTML;
+    translateBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="spinning"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg> Translating...';
+    translateBtn.disabled = true;
+    try {
+      const settings = await new Promise(resolve => {
+        chrome.storage.sync.get(['googleTranslateApiKey', 'targetLanguage', 'inputLanguage'], resolve);
+      });
+      const apiKey = settings.googleTranslateApiKey;
+      const targetLanguage = settings.targetLanguage && settings.targetLanguage.code;
+      const inputLanguage = settings.inputLanguage === 'auto' ? undefined : (settings.inputLanguage && settings.inputLanguage.code ? settings.inputLanguage.code : undefined);
+      if (!apiKey || !targetLanguage) {
+        translatedTextArea.value = '';
+        this.showMessage('Google Translate API key or target language not set. Please check extension settings.', 'error');
+        translateBtn.innerHTML = originalBtnHTML;
+        translateBtn.disabled = false;
+        return;
+      }
+      const requestBody = {
+        q: textToTranslate,
+        target: targetLanguage
+      };
+      if (inputLanguage) {
+        requestBody.source = inputLanguage;
+      }
+      const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+      const data = await response.json();
+      if (data && data.data && data.data.translations && data.data.translations[0]) {
+        // Restore formatting markers
+        let translated = data.data.translations[0].translatedText;
+        translated = translated.replace(/\[\[PARA\]\]/g, '\n\n').replace(/\[\[BR\]\]/g, '\n');
+        translatedTextArea.value = translated;
+        this.showMessage('Translation complete!', 'success');
+      } else if (data.error && data.error.message) {
+        translatedTextArea.value = '';
+        this.showMessage('Translation error: ' + data.error.message, 'error');
+      } else {
+        translatedTextArea.value = '';
+        this.showMessage('Unknown translation error.', 'error');
+      }
+    } catch (err) {
+      translatedTextArea.value = '';
+      this.showMessage('Failed to translate. Please check your API key and network.', 'error');
+    } finally {
+      translateBtn.innerHTML = originalBtnHTML;
+      translateBtn.disabled = false;
+    }
+  }
   // Optimized preview dialog
   showPreviewDialog(composeWindow, originalText, rewrittenText, composeBody, isUserInputOnly = false, originalHTML = null) {
-    const variantName = this.variantNames[this.englishVariant] || 'American English';
+    const variantName = this.variantNames[this.variant] || 'American English';
 
     const overlay = document.createElement('div');
     overlay.className = 'native-english-overlay';
@@ -1056,84 +1132,21 @@ class GmailRewriter {
     setTimeout(() => {
       const translateBtn = dialog.querySelector('#translateBtn');
       const originalTextArea = dialog.querySelector('#originalTextArea');
-      const translatedTextArea = dialog.querySelector('#translatedTextArea');
-      const rewrittenTextArea = dialog.querySelector('#rewrittenTextArea');
-      // Disable translate button until rewritten text is available
+      // Disable translate button until original text is available
       if (translateBtn) {
-        translateBtn.disabled = !rewrittenTextArea.value.trim();
+        translateBtn.disabled = !originalTextArea.value.trim();
       }
-      // Only translate rewritten text
-      const doTranslate = async () => {
-        // Preprocess: preserve line breaks and paragraphs
-        let textToTranslate = rewrittenTextArea.value.trim();
-        // Replace double newlines with [[PARA]], single newlines with [[BR]]
-        textToTranslate = textToTranslate.replace(/\n\n/g, '[[PARA]]').replace(/\n/g, '[[BR]]');
-        if (!textToTranslate) {
-          this.showMessage('No rewritten text to translate.', 'error');
-          return;
-        }
-        translatedTextArea.value = 'Translating...';
-        const originalBtnHTML = translateBtn.innerHTML;
-        translateBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="spinning"><path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/></svg> Translating...';
-        translateBtn.disabled = true;
-        try {
-          const settings = await new Promise(resolve => {
-            chrome.storage.sync.get(['googleTranslateApiKey', 'targetLanguage', 'inputLanguage'], resolve);
-          });
-          const apiKey = settings.googleTranslateApiKey;
-          const targetLanguage = settings.targetLanguage && settings.targetLanguage.code;
-          const inputLanguage = settings.inputLanguage === 'auto' ? undefined : (settings.inputLanguage && settings.inputLanguage.code ? settings.inputLanguage.code : undefined);
-          if (!apiKey || !targetLanguage) {
-            translatedTextArea.value = '';
-            this.showMessage('Google Translate API key or target language not set. Please check extension settings.', 'error');
-            translateBtn.innerHTML = originalBtnHTML;
-            translateBtn.disabled = false;
-            return;
-          }
-          const requestBody = {
-            q: textToTranslate,
-            target: targetLanguage
-          };
-          if (inputLanguage) {
-            requestBody.source = inputLanguage;
-          }
-          const response = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-          });
-          const data = await response.json();
-          if (data && data.data && data.data.translations && data.data.translations[0]) {
-            // Restore formatting markers
-            let translated = data.data.translations[0].translatedText;
-            translated = translated.replace(/\[\[PARA\]\]/g, '\n\n').replace(/\[\[BR\]\]/g, '\n');
-            translatedTextArea.value = translated;
-            this.showMessage('Translation complete!', 'success');
-          } else if (data.error && data.error.message) {
-            translatedTextArea.value = '';
-            this.showMessage('Translation error: ' + data.error.message, 'error');
-          } else {
-            translatedTextArea.value = '';
-            this.showMessage('Unknown translation error.', 'error');
-          }
-        } catch (err) {
-          translatedTextArea.value = '';
-          this.showMessage('Failed to translate. Please check your API key and network.', 'error');
-        } finally {
-          translateBtn.innerHTML = originalBtnHTML;
-          translateBtn.disabled = false;
-        }
-      };
-      if (translateBtn && rewrittenTextArea) {
-        translateBtn.addEventListener('click', doTranslate);
-        // Enable translate button only if rewritten text is present
-        rewrittenTextArea.addEventListener('input', () => {
-          translateBtn.disabled = !rewrittenTextArea.value.trim();
+      // Only translate original text
+      if (translateBtn && originalTextArea) {
+        translateBtn.addEventListener('click', () => this.doTranslate());
+        // Enable translate button only if original text is present
+        originalTextArea.addEventListener('input', () => {
+          translateBtn.disabled = !originalTextArea.value.trim();
         });
       }
-      // Auto-translate rewritten text on dialog open
-      if (rewrittenTextArea && rewrittenTextArea.value.trim()) {
-        doTranslate();
+      // Auto-translate original text on dialog open
+      if (originalTextArea && originalTextArea.value.trim()) {
+        this.doTranslate();
       }
     }, 200);
 

@@ -26,13 +26,13 @@
         .container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
-            border-radius: 20px 20px 0 0;
+            border-radius: 5px 5px 0 0;
             padding: 20px 20px 30px 15px;
             min-height: auto;
             position: relative;
             overflow: hidden;
         }
-
+        
         .container::before {
             content: '';
             position: absolute;
@@ -40,7 +40,7 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
+            background: linear-gradient(90deg, #667eea, #764ba2, #01e769, #f5576c);
             background-size: 400% 400%;
             animation: gradientShift 8s ease infinite;
         }
